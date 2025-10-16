@@ -1,5 +1,7 @@
 package proyecto.interfaces.entities;
 
+import proyecto.interfaces.enums.RolUsuario;
+
 public class Usuarios implements Comparable {
   private int idUsuario;
   private String nombreUsuario;
@@ -9,6 +11,14 @@ public class Usuarios implements Comparable {
   private RolUsuario rol;
 
   public Usuarios() {
+  }
+
+  public Usuarios(String nombreUsuario, String password, String nombre, String apellido, RolUsuario rol) {
+    this.nombreUsuario = nombreUsuario;
+    this.password = password;
+    this.nombre = nombre;
+    this.apellido = apellido;
+    this.rol = rol;
   }
 
   public Usuarios(int idUsuario, String nombreUsuario, String password, String nombre, String apellido, RolUsuario rol) {

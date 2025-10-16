@@ -62,7 +62,6 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
       while (rs.next()) {
 
-        // 1. Construir POJOs relacionados (Usuarios y Cliente/Equipo)
         Usuarios usuario = new Usuarios();
         usuario.setIdUsuario(rs.getInt("id_usuario"));
         usuario.setNombre(rs.getString("nombre_usuario"));
@@ -77,7 +76,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
         equipo.setTipoEquipo(rs.getString("tipo_equipo"));
         equipo.setCliente(cliente);
 
-        // 2. Construir POJO Reparacion
+
         Reparacion reparacion = new Reparacion();
         reparacion.setIdReparacion(rs.getInt("id_reparacion"));
         reparacion.setEquipo(equipo);
@@ -85,12 +84,10 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
         reparacion.setEstado(rs.getString("estado"));
 
-        // **NUEVO Mapeo de Costos (usando BigDecimal)**
         reparacion.setCostoRepuestos(rs.getBigDecimal("costo_repuestos"));
         reparacion.setCostoManoObra(rs.getBigDecimal("costo_mano_obra"));
         reparacion.setPresupuestoTotal(rs.getBigDecimal("presupuesto_total"));
 
-        // Mapeo de fechas
         Date sqlDate = rs.getDate("fecha_diagnostico");
         if (sqlDate != null) {
           reparacion.setFechaDiagnostico(sqlDate.toLocalDate());

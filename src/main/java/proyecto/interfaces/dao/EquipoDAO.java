@@ -4,7 +4,6 @@ import proyecto.interfaces.AdminConexion;
 import proyecto.interfaces.DAO;
 import proyecto.interfaces.entities.Cliente;
 import proyecto.interfaces.entities.Equipo;
-import proyecto.interfaces.entities.RolUsuario;
 import proyecto.interfaces.entities.Usuarios;
 
 import java.sql.*;

@@ -1,4 +1,4 @@
-package proyecto.interfaces.entities;
+package proyecto.interfaces.enums;
 
 public enum RolUsuario {
   ADMIN, TECNICO

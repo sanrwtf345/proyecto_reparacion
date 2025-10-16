@@ -9,7 +9,7 @@ public interface AdminConexion {
     //4 datos de conexion
     String dbDriver= "com.mysql.cj.jdbc.Driver";
     // cadena conexion a mi BD
-    String dbCadenaConexion="jdbc:mysql://localhost:3306/progAutos";
+    String dbCadenaConexion="jdbc:mysql://localhost:3306/reparacion_pcs";
     // nom usuarioBD
     String dbUsuario="root";
     // pass bd

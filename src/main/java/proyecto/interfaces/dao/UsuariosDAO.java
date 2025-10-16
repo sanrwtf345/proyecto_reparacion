@@ -2,7 +2,7 @@ package proyecto.interfaces.dao;
 
 import proyecto.interfaces.AdminConexion;
 import proyecto.interfaces.DAO;
-import proyecto.interfaces.entities.RolUsuario;
+import proyecto.interfaces.enums.RolUsuario;
 import proyecto.interfaces.entities.Usuarios;
 
 import java.sql.*;
@@ -29,6 +29,10 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
 
   private static final String SQL_GETBYID =
       "SELECT * FROM usuarios WHERE id_usuario = ?";
+
+  private static final String SQL_GETBYNOMBREUSUARIO =
+      "SELECT id_usuario, nombre_usuario, password, nombre, apellido, rol " +
+          "FROM usuarios WHERE nombre_usuario = ?";
 
   @Override
   public List<Usuarios> getAll() {
@@ -156,6 +160,48 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
       System.out.println("No se pudo eliminar el usuario. Error: " + e.getMessage());
       throw new RuntimeException(e);
     }
+  }
+
+  public Usuarios getByNombreUsuario(String nombreUsuario) {
+    Connection conn = obtenerConexion();
+    PreparedStatement pst = null;
+    ResultSet rs = null;
+    Usuarios usuario = null;
+
+    try {
+      pst = conn.prepareStatement(SQL_GETBYNOMBREUSUARIO);
+      pst.setString(1, nombreUsuario);
+
+      rs = pst.executeQuery();
+
+      if (rs.next()) {
+        usuario = new Usuarios();
+
+        usuario.setIdUsuario(rs.getInt("id_usuario"));
+        usuario.setNombreUsuario(rs.getString("nombre_usuario"));
+        usuario.setPassword(rs.getString("password"));
+        usuario.setNombre(rs.getString("nombre"));
+        usuario.setApellido(rs.getString("apellido"));
+
+        String rolString = rs.getString("rol");
+        if (rolString != null) {
+          usuario.setRol(RolUsuario.valueOf(rolString.toUpperCase()));
+        }
+      }
+
+    } catch (SQLException e) {
+      System.err.println("Error al buscar usuario por nombre: " + e.getMessage());
+      throw new RuntimeException("Error en Base de Datos al buscar usuario", e);
+    } finally {
+      try {
+        if (rs != null) rs.close();
+        if (pst != null) pst.close();
+        if (conn != null) conn.close();
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    }
+    return usuario;
   }
 
   @Override
