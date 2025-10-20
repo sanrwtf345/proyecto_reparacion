@@ -131,6 +131,54 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   }
 
+  public Integer insertWithIdReturn(Equipo equipo) {
+    Connection conn = obtenerConexion();
+    PreparedStatement pst = null;
+    ResultSet rs = null;
+    Integer generatedId = null; // Inicializamos a null, que es lo que devolveremos en caso de fallo
+
+    try {
+      // MUY IMPORTANTE: Usar Statement.RETURN_GENERATED_KEYS
+      pst = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
+
+      // 1. Setear los parámetros (basado en tu SQL_INSERT de EquipoDAO)
+      pst.setInt(1, equipo.getCliente().getIdCliente());
+      pst.setString(2, equipo.getTipoEquipo());
+      pst.setString(3, equipo.getMarca());
+      pst.setString(4, equipo.getModelo());
+      pst.setString(5, equipo.getNumeroSerie());
+      pst.setString(6, equipo.getProblemaReportado()); // Mapeado a problema_reportado
+
+      int resultado = pst.executeUpdate();
+
+      if (resultado == 1) {
+        // 2. Obtener el ID generado
+        rs = pst.getGeneratedKeys();
+        if (rs.next()) {
+          generatedId = rs.getInt(1); // Capturamos el ID
+          equipo.setIdEquipo(generatedId); // Opcional: seteamos el ID en el objeto
+        }
+        System.out.println("Equipo insertado con ID: " + equipo.getIdEquipo());
+      }
+
+    } catch (SQLException e) {
+      System.err.println("Error al insertar equipo y obtener ID: " + e.getMessage());
+      throw new RuntimeException("Error en Base de Datos al insertar equipo", e);
+    } finally {
+      // 3. Cierre de recursos (debes asegurarte de que estén correctamente definidos)
+      try {
+        if (rs != null) rs.close();
+        if (pst != null) pst.close();
+        if (conn != null) conn.close();
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    }
+
+    // 4. Devolver el ID
+    return generatedId;
+  }
+
   @Override
   public void update(Equipo equipo) {
     Connection conn = obtenerConexion();

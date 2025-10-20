@@ -8,6 +8,7 @@ public class Reparacion {
   private int idReparacion;
   private Equipo equipo;
   private Usuarios usuario;
+  private LocalDate fechaRecepcion;
   private LocalDate fechaDiagnostico;
   private String diagnosticoFinal;
   private String estado;
@@ -18,20 +19,25 @@ public class Reparacion {
 
   public Reparacion(){}
 
-  public Reparacion(int idReparacion, Equipo equipo, Usuarios usuario, LocalDate fechaDiagnostico, String diagnosticoFinal, String estado, BigDecimal costoRepuestos, BigDecimal costoManoObra, BigDecimal presupuestoTotal, LocalDate fechaEntregaEstimada) {
+  public Reparacion(int idReparacion, Equipo equipo, Usuarios usuario, LocalDate fechaRecepcion, LocalDate fechaDiagnostico, String diagnosticoFinal, String estado, BigDecimal costoRepuestos, BigDecimal costoManoObra, BigDecimal presupuestoTotal, LocalDate fechaEntregaEstimada) {
     this.idReparacion = idReparacion;
     this.equipo = equipo;
     this.usuario = usuario;
+    this.fechaRecepcion = fechaRecepcion;
     this.fechaDiagnostico = fechaDiagnostico;
     this.diagnosticoFinal = diagnosticoFinal;
     this.estado = estado;
-    this.costoRepuestos = costoRepuestos.ZERO;
-    this.costoManoObra = costoManoObra.ZERO;
-    this.presupuestoTotal = presupuestoTotal.ZERO;
+    this.costoRepuestos = costoRepuestos;
+    this.costoManoObra = costoManoObra;
+    this.presupuestoTotal = presupuestoTotal;
     this.fechaEntregaEstimada = fechaEntregaEstimada;
   }
 
   //setter
+  public void setFechaRecepcion(LocalDate fechaRecepcion) {
+    this.fechaRecepcion = fechaRecepcion;
+  }
+
   public void setDiagnosticoFinal(String diagnosticoFinal) {
     this.diagnosticoFinal = diagnosticoFinal;
   }
@@ -73,6 +79,10 @@ public class Reparacion {
   }
 
   //getters
+  public LocalDate getFechaRecepcion() {
+    return fechaRecepcion;
+  }
+
   public int getIdReparacion() {
     return idReparacion;
   }

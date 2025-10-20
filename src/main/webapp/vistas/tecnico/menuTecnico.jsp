@@ -9,6 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú Técnico - Gestión de Tareas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         body { background-color: #f8f9fa; }
         .card-menu { border: none; border-radius: 15px; transition: transform 0.3s; }
@@ -39,8 +40,9 @@
                     <div class="card-body">
                         <h5 class="card-title text-primary"><i class="bi bi-file-earmark-plus-fill me-2"></i>Nueva Orden</h5>
                         <p class="card-text">Registrar un nuevo cliente, su equipo y generar la orden de servicio inicial.</p>
-                        <a href="${pageContext.request.contextPath}/ClienteEquipoController" class="btn btn-primary w-100">
-                            Registrar Equipo
+
+                        <a href="<%= request.getContextPath() %>/ClienteEquipoController" class="btn btn-primary w-100">
+                            Iniciar Registro de Cliente
                         </a>
                     </div>
                 </div>
@@ -58,9 +60,12 @@
                 </div>
             </div>
 
+            <%-- Puedes añadir aquí un tercer menú para "Consultar Clientes Existentes" si lo necesitas --%>
+
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <%-- Importante: añadí el link de Bootstrap Icons que faltaba --%>
 </body>
 </html>

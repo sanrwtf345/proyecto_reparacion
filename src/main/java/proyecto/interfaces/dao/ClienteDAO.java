@@ -102,6 +102,56 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
     }
   }
 
+  public Integer insertWithIdReturn(Cliente cliente) {
+    Connection conn = obtenerConexion(); // Asumo que obtenerConexion() es accesible
+    PreparedStatement pst = null;
+    ResultSet rs = null;
+    Integer generatedId = null; // Inicializamos a null, que es lo que devolvemos si falla
+
+    try {
+      // 1. Indicar a la conexión que queremos las claves generadas
+      pst = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
+
+      // 2. Setear los parámetros
+      pst.setString(1, cliente.getNombre());
+      pst.setString(2, cliente.getApellido());
+      pst.setString(3, cliente.getTelefono());
+      pst.setString(4, cliente.getEmail());
+
+      // Asumo que el objeto Usuario y su ID ya están seteados en el Cliente
+      pst.setInt(5, cliente.getUsuario().getIdUsuario());
+
+      int resultado = pst.executeUpdate();
+
+      if (resultado == 1) {
+        // 3. Obtener el ResultSet con la clave generada
+        rs = pst.getGeneratedKeys();
+        if (rs.next()) {
+          generatedId = rs.getInt(1); // Capturamos el ID
+          cliente.setIdCliente(generatedId); // Seteamos el ID en el objeto (opcional pero útil)
+        }
+        System.out.println("Cliente insertado correctamente con ID: " + cliente.getIdCliente());
+      }
+
+    } catch (SQLException e) {
+      // Es mejor envolver la excepción en una RuntimeException o propagarla
+      throw new RuntimeException("Error al insertar cliente y obtener ID generado.", e);
+    } finally {
+      // 4. Cerrar recursos
+      try {
+        if (rs != null) rs.close();
+        if (pst != null) pst.close();
+        if (conn != null) conn.close();
+      } catch (SQLException e) {
+        // Loggear o manejar la excepción de cierre de recursos
+        e.printStackTrace();
+      }
+    }
+
+    // 5. Devolver el ID generado
+    return generatedId;
+  }
+
   @Override
   public void update(Cliente cliente) {
     conn = obtenerConexion();

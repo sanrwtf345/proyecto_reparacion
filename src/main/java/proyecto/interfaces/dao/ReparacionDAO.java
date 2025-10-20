@@ -10,6 +10,7 @@ import proyecto.interfaces.entities.Usuarios;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
 
 public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
@@ -26,7 +27,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
   private static final String SQL_GETALL =
       "SELECT r.*, e.tipo_equipo, c.nombre AS nombre_cliente, c.apellido AS apellido_cliente, " +
-          "u.nombre AS nombre_usuario, u.apellido AS apellido_usuario " +
+          "u.nombre AS nombre_usuario, u.apellido AS apellido_usuario, r.fecha_creacion " +
           "FROM reparacion r " +
           "JOIN equipo e ON r.id_equipo = e.id_equipo " +
           "JOIN clientes c ON e.id_cliente = c.id_cliente " +
@@ -88,9 +89,17 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
         reparacion.setCostoManoObra(rs.getBigDecimal("costo_mano_obra"));
         reparacion.setPresupuestoTotal(rs.getBigDecimal("presupuesto_total"));
 
-        Date sqlDate = rs.getDate("fecha_diagnostico");
-        if (sqlDate != null) {
-          reparacion.setFechaDiagnostico(sqlDate.toLocalDate());
+        // 1. Mapeo de Fecha de Recepción (r.fecha_creacion)
+        // CORRECCIÓN CLAVE: Asigna a setFechaRecepcion() y convierte a LocalDate.
+        Date sqlDateRecepcion = rs.getDate("fecha_creacion");
+        if (sqlDateRecepcion != null) {
+          reparacion.setFechaRecepcion(sqlDateRecepcion.toLocalDate());
+        }
+
+        // 2. Mapeo de Fecha de Diagnóstico (r.fecha_diagnostico)
+        Date sqlDateDiagnostico = rs.getDate("fecha_diagnostico");
+        if (sqlDateDiagnostico != null) {
+          reparacion.setFechaDiagnostico(sqlDateDiagnostico.toLocalDate());
         }
 
         listaReparaciones.add(reparacion);
@@ -111,6 +120,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     return listaReparaciones;
   }
 
+
   @Override
   public void insert(Reparacion reparacion) {
     Connection conn = obtenerConexion();
@@ -121,11 +131,11 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
       pst = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
 
       // 1. Claves Foráneas
-      pst.setInt(1, reparacion.getEquipo().getIdEquipo());    // ID del equipo asociado
-      pst.setInt(2, reparacion.getUsuario().getIdUsuario());  // ID del técnico a cargo
+      pst.setInt(1, reparacion.getEquipo().getIdEquipo());
+      pst.setInt(2, reparacion.getUsuario().getIdUsuario());
 
       // 2. Diagnóstico y Estado Iniciales
-      pst.setString(3, reparacion.getDiagnosticoFinal()); // Inicialmente podría ser null/vacío
+      pst.setString(3, reparacion.getDiagnosticoFinal());
       pst.setString(4, reparacion.getEstado());
 
       // 3. CAMPOS DE COSTO (BigDecimal)
