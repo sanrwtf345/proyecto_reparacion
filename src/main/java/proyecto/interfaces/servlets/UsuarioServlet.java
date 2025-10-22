@@ -2,7 +2,7 @@ package proyecto.interfaces.servlets;
 
 import proyecto.interfaces.dao.UsuariosDAO;
 import proyecto.interfaces.entities.Usuarios;
-import proyecto.interfaces.enums.RolUsuario; // Necesario para guardar el rol
+import proyecto.interfaces.enums.RolUsuario;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,23 +14,26 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Servlet que maneja las operaciones CRUD (Listar, Eliminar, Guardar) para el administrador.
+ * Servlet que maneja las operaciones CRUD (Listar, Eliminar, Guardar/Editar) para el administrador.
  */
-@WebServlet("/UsuariosController") // Usamos este mapeo para que la URL en el menú sea consistente
+@WebServlet("/UsuariosController")
 public class UsuarioServlet extends HttpServlet {
   private UsuariosDAO usuarioDAO;
 
   @Override
   public void init() throws ServletException {
-    // Inicializa el DAO para la conexión a la base de datos
     this.usuarioDAO = new UsuariosDAO();
   }
+
+  // =========================================================================
+  //                             MÉTODOS GET
+  // =========================================================================
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String action = request.getParameter("action");
     if (action == null) {
-      action = "listar"; // Acción por defecto
+      action = "listar";
     }
 
     try {
@@ -41,8 +44,12 @@ public class UsuarioServlet extends HttpServlet {
         case "eliminar":
           eliminarUsuario(request, response);
           break;
-        case "formularioRegisUsuario": // <-- CORRECCIÓN: Coincide con el parámetro del menú
-          request.getRequestDispatcher("/vistas/admin/formularioRegisUsuario.jsp").forward(request, response);
+        case "formularioRegisUsuario":
+          // Muestra un formulario vacío para nuevo registro
+          mostrarFormulario(request, response);
+          break;
+        case "editar": // Lógica para cargar datos para edición
+          mostrarFormularioEdicion(request, response);
           break;
         default:
           listarUsuarios(request, response);
@@ -53,74 +60,153 @@ public class UsuarioServlet extends HttpServlet {
     }
   }
 
+  private void mostrarFormularioEdicion(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    String idUsuarioStr = request.getParameter("idUsuario");
+
+    try {
+      int idUsuario = Integer.parseInt(idUsuarioStr);
+      Usuarios usuario = usuarioDAO.getById(idUsuario);
+
+      if (usuario != null) {
+        // Se pasa el objeto 'usuario' al JSP para precargar los campos
+        request.setAttribute("usuario", usuario);
+        mostrarFormulario(request, response);
+      } else {
+        request.getSession().setAttribute("error", "Usuario no encontrado con ID: " + idUsuarioStr);
+        response.sendRedirect(request.getContextPath() + "/UsuariosController?action=listar");
+      }
+    } catch (NumberFormatException e) {
+      request.getSession().setAttribute("error", "Error: ID de usuario inválido.");
+      response.sendRedirect(request.getContextPath() + "/UsuariosController?action=listar");
+    }
+  }
+
+  private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    request.getRequestDispatcher("/vistas/admin/formularioRegisUsuario.jsp").forward(request, response);
+  }
+
+  // =========================================================================
+  //                             MÉTODOS POST
+  // =========================================================================
+
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String action = request.getParameter("action");
 
     if (action != null && action.equals("guardar")) {
       guardarUsuario(request, response);
+    } else {
+      doGet(request, response);
     }
   }
 
+  /**
+   * Maneja tanto la inserción de un nuevo usuario como la actualización de uno existente.
+   */
   private void guardarUsuario(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-    // 1. Obtener parámetros del formulario
-    String nombreUsuario = request.getParameter("nombreUsuario");
-    String password = request.getParameter("password");
-    String nombre = request.getParameter("nombre");
-    String apellido = request.getParameter("apellido");
-    String rolStr = request.getParameter("rol");
+    // 1. Declaración de variables fuera del try (SOLUCIÓN AL ERROR DE ÁMBITO)
+    String idUsuarioStr = request.getParameter("idUsuario");
+    Usuarios usuario = null; // Se inicializa a null, luego se crea o se carga
+    String rolStr = null; // Se inicializa a null
 
-    // 2. Validación y lógica de guardado
-    if (nombreUsuario == null || nombreUsuario.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-      request.setAttribute("error", "Los campos de usuario y contraseña son obligatorios.");
-      // Volvemos al formulario para mostrar el error
-      request.getRequestDispatcher("/vistas/admin/formularioRegisUsuario.jsp").forward(request, response);
-      return;
-    }
+
+    boolean esEdicion = (idUsuarioStr != null && !idUsuarioStr.isEmpty());
+    String mensajeExito = "";
 
     try {
-      Usuarios nuevoUsuario = new Usuarios();
-      nuevoUsuario.setNombreUsuario(nombreUsuario);
-      nuevoUsuario.setPassword(password); // Recordar hashear la contraseña en producción real
-      nuevoUsuario.setNombre(nombre);
-      nuevoUsuario.setApellido(apellido);
+      if (esEdicion) {
+        int idUsuario = Integer.parseInt(idUsuarioStr);
+        usuario = usuarioDAO.getById(idUsuario);
+        if (usuario == null) {
+          throw new Exception("Usuario a editar no encontrado.");
+        }
+        mensajeExito = "Usuario N° " + idUsuario + " actualizado exitosamente.";
+      } else {
+        usuario = new Usuarios();
+        mensajeExito = "Usuario registrado exitosamente.";
+      }
 
-      // Convertir String a Enum
-      nuevoUsuario.setRol(RolUsuario.valueOf(rolStr));
+      // 2. Obtener y setear los datos comunes
+      String nombreUsuario = request.getParameter("nombreUsuario");
+      String password = request.getParameter("password");
+      String nombre = request.getParameter("nombre");
+      String apellido = request.getParameter("apellido");
 
-      // Guardar en la base de datos
-      usuarioDAO.insert(nuevoUsuario);
+      // Asignación de rolStr (dentro del try, pero declarado afuera)
+      rolStr = request.getParameter("rol");
 
-      // Redirigir al listado con mensaje de éxito
-      request.getSession().setAttribute("success", "Usuario '" + nombreUsuario + "' registrado exitosamente.");
+      // Validación básica
+      if (nombreUsuario == null || nombreUsuario.trim().isEmpty() || rolStr == null || rolStr.trim().isEmpty()) {
+        request.setAttribute("error", "El nombre de usuario y el rol son obligatorios.");
+        request.setAttribute("usuario", usuario);
+        mostrarFormulario(request, response);
+        return;
+      }
+
+      // 3. Setear los datos en el objeto
+      usuario.setNombreUsuario(nombreUsuario);
+      usuario.setNombre(nombre);
+      usuario.setApellido(apellido);
+
+      // Esta línea lanza IllegalArgumentException si rolStr no coincide con un Enum
+      usuario.setRol(RolUsuario.valueOf(rolStr));
+
+      // 4. Lógica de Contraseña
+      if (password != null && !password.trim().isEmpty()) {
+        usuario.setPassword(password);
+      } else if (!esEdicion) {
+        request.setAttribute("error", "La contraseña es obligatoria para nuevos registros.");
+        request.setAttribute("usuario", usuario);
+        mostrarFormulario(request, response);
+        return;
+      }
+
+      // 5. Ejecutar la operación DAO
+      if (esEdicion) {
+        usuarioDAO.update(usuario);
+      } else {
+        usuarioDAO.insert(usuario);
+      }
+
+      // 6. Redirección
+      request.getSession().setAttribute("success", mensajeExito);
       response.sendRedirect(request.getContextPath() + "/UsuariosController?action=listar");
 
+    } catch (NumberFormatException e) {
+      // Maneja error si el ID de edición no es un número
+      request.setAttribute("error", "Error en formato de ID.");
+      request.setAttribute("usuario", usuario);
+      mostrarFormulario(request, response);
     } catch (IllegalArgumentException e) {
-      // Error si el rol no existe o el enum falla
-      request.setAttribute("error", "Error en el rol seleccionado: " + rolStr);
-      request.getRequestDispatcher("/vistas/admin/formularioRegisUsuario.jsp").forward(request, response);
+      // Maneja error si el rolStr no coincide con un valor de RolUsuario
+      request.setAttribute("error", "Error en el rol seleccionado. Valor proporcionado: " + rolStr);
+      request.setAttribute("usuario", usuario);
+      mostrarFormulario(request, response);
     } catch (Exception e) {
-      // Error de BD (ej. nombre de usuario duplicado, si la BD lo maneja)
+      // Maneja errores de BD o errores no esperados
       request.setAttribute("error", "Error al guardar el usuario: " + e.getMessage());
-      request.getRequestDispatcher("/vistas/admin/formularioRegisUsuario.jsp").forward(request, response);
+      request.setAttribute("usuario", usuario);
+      mostrarFormulario(request, response);
     }
   }
 
+
+  // =========================================================================
+  //                         MÉTODOS DE LISTADO/ELIMINACIÓN
+  // =========================================================================
 
   private void listarUsuarios(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     List<Usuarios> listaUsuarios = usuarioDAO.getAll();
     request.setAttribute("listaUsuarios", listaUsuarios);
-
-    // forward a la vista ListadoUsuarios.jsp
     request.getRequestDispatcher("/vistas/admin/listadoUsuarios.jsp").forward(request, response);
   }
 
   private void eliminarUsuario(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
     try {
-      int idUsuario = Integer.parseInt(request.getParameter("id"));
+      // Usamos idUsuario consistente con la URL del JSP
+      int idUsuario = Integer.parseInt(request.getParameter("idUsuario"));
 
-      // No permite al admin eliminar su propia cuenta
       Usuarios usuarioLogueado = (Usuarios) request.getSession().getAttribute("usuarioLogueado");
 
       if (usuarioLogueado != null && usuarioLogueado.getIdUsuario() == idUsuario) {
@@ -135,7 +221,6 @@ public class UsuarioServlet extends HttpServlet {
       request.getSession().setAttribute("error", "Error al eliminar: " + e.getMessage());
     }
 
-    // Redirigir de vuelta al listado para recargar la página y evitar doble acción
     response.sendRedirect(request.getContextPath() + "/UsuariosController?action=listar");
   }
 }

@@ -3,6 +3,7 @@ package proyecto.interfaces.dao;
 import proyecto.interfaces.AdminConexion;
 import proyecto.interfaces.DAO;
 import proyecto.interfaces.entities.Cliente;
+import proyecto.interfaces.entities.Usuarios; // Asegúrate de importar tu clase Usuarios
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -10,10 +11,8 @@ import java.util.List;
 
 public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
 
-  private Connection conn = null;
-
   private static final String SQL_GETALL =
-      "SELECT * FROM clientes ORDER BY apellido, nombre";
+      "SELECT id_cliente, nombre, apellido, telefono, email, id_usuario FROM clientes ORDER BY apellido, nombre";
 
   private static final String SQL_INSERT =
       "INSERT INTO clientes (nombre, apellido, telefono, email, id_usuario) " +
@@ -27,11 +26,14 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
       "DELETE FROM clientes WHERE id_cliente = ?";
 
   private static final String SQL_GETBYID =
-      "SELECT * FROM clientes WHERE id_cliente = ?";
+      "SELECT id_cliente, nombre, apellido, telefono, email, id_usuario FROM clientes WHERE id_cliente = ?";
+
+  // No es necesario modificar existsById, ya que es eficiente.
+
 
   @Override
   public List<Cliente> getAll() {
-    conn = obtenerConexion();
+    Connection conn = obtenerConexion(); // ✅ Conexión declarada localmente
     PreparedStatement pst = null;
     ResultSet rs = null;
     List<Cliente> listaClientes = new ArrayList<>();
@@ -47,6 +49,13 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
         cliente.setApellido(rs.getString("apellido"));
         cliente.setTelefono(rs.getString("telefono"));
         cliente.setEmail(rs.getString("email"));
+
+        // ✅ CORRECCIÓN 1: Mapear la FK id_usuario a un objeto Usuarios (solo con el ID)
+        // Asumimos que la clase Usuarios tiene un constructor que acepta un ID o un setter.
+        Usuarios usuario = new Usuarios();
+        usuario.setIdUsuario(rs.getInt("id_usuario"));
+        cliente.setUsuario(usuario);
+
         listaClientes.add(cliente);
       }
 
@@ -65,25 +74,30 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
     return listaClientes;
   }
 
+  // RENOMBRADO de 'insertWithIdReturn' a 'insert', el patrón ideal.
   @Override
   public void insert(Cliente cliente) {
-    conn = obtenerConexion();
+    Connection conn = obtenerConexion(); // ✅ Conexión declarada localmente
     PreparedStatement pst = null;
     ResultSet rs = null;
 
     try {
+      // Se usa RETURN_GENERATED_KEYS para obtener el ID
       pst = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
 
       pst.setString(1, cliente.getNombre());
       pst.setString(2, cliente.getApellido());
       pst.setString(3, cliente.getTelefono());
       pst.setString(4, cliente.getEmail());
+      // Se asume que cliente.getUsuario() no es null y tiene el ID
       pst.setInt(5, cliente.getUsuario().getIdUsuario());
 
       int resultado = pst.executeUpdate();
+
       if (resultado == 1) {
         rs = pst.getGeneratedKeys();
         if (rs.next()) {
+          // ✅ Actualiza el objeto Cliente con el ID generado (patrón ideal)
           cliente.setIdCliente(rs.getInt(1));
         }
         System.out.println("Cliente insertado correctamente con id: " + cliente.getIdCliente());
@@ -91,6 +105,9 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
 
     } catch (SQLException e) {
       throw new RuntimeException("Error al insertar cliente", e);
+    } catch (NullPointerException e) {
+      // Captura si cliente.getUsuario() o getIdUsuario() es null/falla
+      throw new RuntimeException("Error al obtener ID de usuario para insertar cliente.", e);
     } finally {
       try {
         if (rs != null) rs.close();
@@ -100,61 +117,11 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
         e.printStackTrace();
       }
     }
-  }
-
-  public Integer insertWithIdReturn(Cliente cliente) {
-    Connection conn = obtenerConexion(); // Asumo que obtenerConexion() es accesible
-    PreparedStatement pst = null;
-    ResultSet rs = null;
-    Integer generatedId = null; // Inicializamos a null, que es lo que devolvemos si falla
-
-    try {
-      // 1. Indicar a la conexión que queremos las claves generadas
-      pst = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
-
-      // 2. Setear los parámetros
-      pst.setString(1, cliente.getNombre());
-      pst.setString(2, cliente.getApellido());
-      pst.setString(3, cliente.getTelefono());
-      pst.setString(4, cliente.getEmail());
-
-      // Asumo que el objeto Usuario y su ID ya están seteados en el Cliente
-      pst.setInt(5, cliente.getUsuario().getIdUsuario());
-
-      int resultado = pst.executeUpdate();
-
-      if (resultado == 1) {
-        // 3. Obtener el ResultSet con la clave generada
-        rs = pst.getGeneratedKeys();
-        if (rs.next()) {
-          generatedId = rs.getInt(1); // Capturamos el ID
-          cliente.setIdCliente(generatedId); // Seteamos el ID en el objeto (opcional pero útil)
-        }
-        System.out.println("Cliente insertado correctamente con ID: " + cliente.getIdCliente());
-      }
-
-    } catch (SQLException e) {
-      // Es mejor envolver la excepción en una RuntimeException o propagarla
-      throw new RuntimeException("Error al insertar cliente y obtener ID generado.", e);
-    } finally {
-      // 4. Cerrar recursos
-      try {
-        if (rs != null) rs.close();
-        if (pst != null) pst.close();
-        if (conn != null) conn.close();
-      } catch (SQLException e) {
-        // Loggear o manejar la excepción de cierre de recursos
-        e.printStackTrace();
-      }
-    }
-
-    // 5. Devolver el ID generado
-    return generatedId;
   }
 
   @Override
   public void update(Cliente cliente) {
-    conn = obtenerConexion();
+    Connection conn = obtenerConexion(); // ✅ Conexión declarada localmente
     PreparedStatement pst = null;
 
     try {
@@ -188,7 +155,7 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
 
   @Override
   public void delete(Integer id) {
-    conn = obtenerConexion();
+    Connection conn = obtenerConexion(); // ✅ Conexión declarada localmente
     PreparedStatement pst = null;
 
     try {
@@ -216,7 +183,7 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
 
   @Override
   public Cliente getById(Integer id) {
-    conn = obtenerConexion();
+    Connection conn = obtenerConexion(); // ✅ Conexión declarada localmente
     PreparedStatement pst = null;
     ResultSet rs = null;
     Cliente cliente = null;
@@ -233,6 +200,11 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
         cliente.setApellido(rs.getString("apellido"));
         cliente.setTelefono(rs.getString("telefono"));
         cliente.setEmail(rs.getString("email"));
+
+        // ✅ CORRECCIÓN 1: Mapear la FK id_usuario a un objeto Usuarios (solo con el ID)
+        Usuarios usuario = new Usuarios();
+        usuario.setIdUsuario(rs.getInt("id_usuario"));
+        cliente.setUsuario(usuario);
       }
 
     } catch (SQLException e) {
@@ -252,7 +224,7 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
 
   @Override
   public boolean existsById(Integer id) {
-    conn = obtenerConexion();
+    Connection conn = obtenerConexion(); // ✅ Conexión declarada localmente
     PreparedStatement pst = null;
     ResultSet rs = null;
     boolean existe = false;

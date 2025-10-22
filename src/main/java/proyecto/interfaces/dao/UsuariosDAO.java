@@ -206,10 +206,11 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
 
   @Override
   public Usuarios getById(Integer id) {
-    conn = obtenerConexion();
+    // Declaración de variables inicializada fuera del try
+    Connection conn = obtenerConexion();
     PreparedStatement pst = null;
     ResultSet rs = null;
-    Usuarios usuario = null;
+    Usuarios usuario = null; // Inicializado a null (valor de retorno por defecto)
 
     try {
       pst = conn.prepareStatement(SQL_GETBYID);
@@ -217,6 +218,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
       rs = pst.executeQuery();
 
       if (rs.next()) {
+        // Mapeo si se encuentra el registro
         usuario = new Usuarios();
         usuario.setIdUsuario(rs.getInt("id_usuario"));
         usuario.setNombreUsuario(rs.getString("nombre_usuario"));
@@ -226,15 +228,23 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
         usuario.setRol(RolUsuario.valueOf(rs.getString("rol")));
       }
 
-      rs.close();
-      pst.close();
-      conn.close();
-
     } catch (SQLException e) {
-      throw new RuntimeException(e);
+      System.err.println("Error al obtener usuario por ID: " + e.getMessage());
+      // Propagamos la excepción, pero usando System.err para loguear
+      throw new RuntimeException("Error en Base de Datos al buscar usuario por ID", e);
+    } finally {
+      // ✅ Cierre de recursos SEGURO, independientemente de si hubo excepción o no
+      try {
+        if (rs != null) rs.close();
+        if (pst != null) pst.close();
+        if (conn != null) conn.close();
+      } catch (SQLException e) {
+        // Ignoramos el error de cierre, solo lo logueamos
+        e.printStackTrace();
+      }
     }
 
-    return usuario;
+    return usuario; // Retornará el objeto Usuario o null si no se encontró o hubo un error manejado
   }
 
   @Override

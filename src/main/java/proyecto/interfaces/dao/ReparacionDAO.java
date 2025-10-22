@@ -50,6 +50,11 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
   private static final String SQL_DELETE =
       "DELETE FROM reparacion WHERE id_reparacion = ?";
 
+  // ✅ NUEVO: Query para obtener reparaciones por ID de equipo
+  private static final String SQL_GETBYEQUIPOID =
+      "SELECT id_reparacion, id_equipo, id_usuario FROM reparacion WHERE id_equipo = ?";
+
+
   @Override
   public List<Reparacion> getAll() {
     Connection conn = obtenerConexion();
@@ -107,6 +112,56 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
     } catch (SQLException e) {
       throw new RuntimeException("Error al obtener todas las reparaciones", e);
+    } finally {
+      try {
+        if (rs != null) rs.close();
+        if (pst != null) pst.close();
+        if (conn != null) conn.close();
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    }
+
+    return listaReparaciones;
+  }
+
+  /**
+   * Obtiene todas las reparaciones asociadas a un ID de Equipo.
+   * Necesario para la eliminación en cascada de Cliente -> Equipo.
+   * @param idEquipo El ID del equipo a buscar.
+   * @return Lista de Reparaciones pertenecientes a ese equipo.
+   */
+  public List<Reparacion> getByEquipoId(Integer idEquipo) {
+    Connection conn = obtenerConexion();
+    PreparedStatement pst = null;
+    ResultSet rs = null;
+    List<Reparacion> listaReparaciones = new ArrayList<>();
+
+    try {
+      pst = conn.prepareStatement(SQL_GETBYEQUIPOID);
+      pst.setInt(1, idEquipo);
+      rs = pst.executeQuery();
+
+      while (rs.next()) {
+        Reparacion reparacion = new Reparacion();
+        reparacion.setIdReparacion(rs.getInt("id_reparacion"));
+
+        // Creamos objetos placeholder con solo el ID (para la eliminación)
+        Equipo equipoPlaceholder = new Equipo();
+        equipoPlaceholder.setIdEquipo(rs.getInt("id_equipo"));
+
+        Usuarios usuarioPlaceholder = new Usuarios();
+        usuarioPlaceholder.setIdUsuario(rs.getInt("id_usuario"));
+
+        reparacion.setEquipo(equipoPlaceholder);
+        reparacion.setUsuario(usuarioPlaceholder);
+
+        listaReparaciones.add(reparacion);
+      }
+
+    } catch (SQLException e) {
+      System.err.println("Error al obtener reparaciones por ID de equipo: " + e.getMessage());
+      throw new RuntimeException("Error en Base de Datos al listar reparaciones por equipo", e);
     } finally {
       try {
         if (rs != null) rs.close();

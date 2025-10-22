@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ page isELIgnored="false" %> <%-- Aseguramos que el EL funcione --%>
+<%@ page isELIgnored="false" %>
 
 <!DOCTYPE html>
 <html lang="es">
@@ -44,20 +44,24 @@
                         <td>
                             <%-- Solo mostramos el botón de eliminar si NO es la cuenta del admin logueado --%>
                             <c:if test="${user.idUsuario != sessionScope.usuarioLogueado.idUsuario}">
-                                <a href="<%= request.getContextPath() %>/UsuariosController?action=eliminar&id=${user.idUsuario}"
+                                <a href="<%= request.getContextPath() %>/UsuariosController?action=eliminar&idUsuario=${user.idUsuario}"
                                    class="btn btn-danger btn-sm"
                                    onclick="return confirm('¿Estás seguro de que deseas eliminar a ${user.nombreUsuario}?');">
                                     Eliminar
                                 </a>
                             </c:if>
+
+
+                            <a href="<%= request.getContextPath() %>/UsuariosController?action=editar&idUsuario=${user.idUsuario}"
+                               class="btn btn-info btn-sm text-white">Editar</a>
                         </td>
                     </tr>
                 </c:forEach>
             </tbody>
         </table>
 
-
         <a href="<%= request.getContextPath() %>/vistas/admin/menuAdmin.jsp" class="btn btn-secondary">Volver al Menú</a>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
