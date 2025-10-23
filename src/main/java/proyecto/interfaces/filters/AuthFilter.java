@@ -24,8 +24,8 @@ public class AuthFilter implements Filter {
   // Rutas que NO requieren iniciar sesión
   private static final List<String> PUBLIC_PATHS = Arrays.asList(
       "/login.jsp",
-      "/LoginServlet",    // <--- CORREGIDO: Usando el nombre de tu Servlet de Login
-      "/LogoutServlet",   // <--- Agregado el Servlet de Logout para evitar problemas de cierre
+      "/LoginServlet",
+      "/LogoutServlet",
       "/css/",            // Permite acceder a la carpeta de CSS
       "/js/",             // Permite acceder a la carpeta de JavaScript
       "/images/"          // Permite acceder a imágenes/recursos estáticos

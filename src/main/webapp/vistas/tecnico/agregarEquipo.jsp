@@ -22,31 +22,34 @@
 </head>
 <body>
 
-    <div class="container mt-5">
+    <div class="container mt-5" role="main">
         <div class="card card-shadow mx-auto" style="max-width: 800px; border-radius: 10px;">
             <div class="card-header card-header-custom text-center">
-                <h3 class="mb-0 fw-bold"><i class="bi bi-person-check-fill me-2"></i>Registrar Equipo para Cliente Existente</h3>
+                <h3 class="mb-0 fw-bold" id="form-title"><i class="bi bi-person-check-fill me-2" aria-hidden="true"></i>Registrar Equipo para Cliente Existente</h3>
             </div>
             <div class="card-body p-4">
 
                 <%-- Mensaje de Error (si el Servlet regresa debido a fallos de validación) --%>
                 <c:if test="${not empty requestScope.error}">
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>${requestScope.error}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <%-- ARIA: role="alert" y aria-live="assertive" para notificar el error inmediatamente --%>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" aria-live="assertive">
+                        <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>${requestScope.error}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar alerta de error"></button>
                     </div>
                     <c:remove var="error" scope="request"/>
                 </c:if>
 
                 <%-- Formulario POST: Envia datos al EquipoController --%>
-                <form action="<%= request.getContextPath() %>/EquipoController" method="POST">
+                <%-- ARIA: Se asocia el formulario con el título --%>
+                <form action="<%= request.getContextPath() %>/EquipoController" method="POST" aria-labelledby="form-title">
 
                     <input type="hidden" name="action" value="guardarNuevoEquipo">
 
-                    <h5 class="mb-3 text-secondary border-bottom pb-2"><i class="bi bi-search me-2"></i>Seleccionar Cliente</h5>
+                    <h5 class="mb-3 text-secondary border-bottom pb-2"><i class="bi bi-search me-2" aria-hidden="true"></i>Seleccionar Cliente</h5>
                     <div class="mb-3">
                         <label for="idCliente" class="form-label fw-bold">Cliente <span class="text-danger">*</span></label>
-                        <select class="form-select" id="idCliente" name="idCliente" required>
+                        <%-- ARIA: aria-required="true" y aria-describedby para el texto de ayuda --%>
+                        <select class="form-select" id="idCliente" name="idCliente" required aria-required="true" aria-describedby="idClienteHelp">
                             <option value="" disabled <c:if test="${empty param.idCliente}">selected</c:if>>Seleccione un Cliente</option>
                             <c:forEach var="cliente" items="${requestScope.listaClientes}">
                                 <option value="${cliente.idCliente}"
@@ -55,16 +58,17 @@
                                 </option>
                             </c:forEach>
                         </select>
-                        <div class="form-text">Si el cliente no aparece, debe registrarlo primero en el menú principal.</div>
+                        <div id="idClienteHelp" class="form-text">Si el cliente no aparece, debe registrarlo primero en el menú principal.</div>
                     </div>
 
                     <hr class="my-4">
 
-                    <h5 class="mb-3 text-secondary border-bottom pb-2"><i class="bi bi-laptop me-2"></i>Datos del Equipo</h5>
+                    <h5 class="mb-3 text-secondary border-bottom pb-2"><i class="bi bi-laptop me-2" aria-hidden="true"></i>Datos del Equipo</h5>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="tipoEquipo" class="form-label fw-bold">Tipo de Equipo <span class="text-danger">*</span></label>
-                            <select class="form-select" id="tipoEquipo" name="tipoEquipo" required>
+                            <%-- ARIA: aria-required="true" --%>
+                            <select class="form-select" id="tipoEquipo" name="tipoEquipo" required aria-required="true">
                                 <option value="" disabled <c:if test="${empty param.tipoEquipo}">selected</c:if>>Seleccione</option>
                                 <option value="PORTATIL" <c:if test="${param.tipoEquipo == 'PORTATIL'}">selected</c:if>>Laptop / Notebook</option>
                                 <option value="ESCRITORIO" <c:if test="${param.tipoEquipo == 'ESCRITORIO'}">selected</c:if>>PC de Escritorio</option>
@@ -89,19 +93,22 @@
                         </div>
                     </div>
 
-                    <h5 class="mt-4 mb-3 text-secondary border-bottom pb-2"><i class="bi bi-exclamation-octagon-fill me-2"></i>Falla Reportada</h5>
+                    <h5 class="mt-4 mb-3 text-secondary border-bottom pb-2"><i class="bi bi-exclamation-octagon-fill me-2" aria-hidden="true"></i>Falla Reportada</h5>
                     <div class="mb-3">
                         <label for="problemaReportado" class="form-label fw-bold">Descripción de la Falla <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="problemaReportado" name="problemaReportado" rows="4" required>${param.problemaReportado}</textarea>
-                        <div class="form-text">Detalle la falla reportada. Esta descripción se usará para la orden inicial.</div>
+                        <%-- ARIA: aria-required="true" y aria-describedby para el texto de ayuda --%>
+                        <textarea class="form-control" id="problemaReportado" name="problemaReportado" rows="4" required aria-required="true" aria-describedby="problemaReportadoHelp">${param.problemaReportado}</textarea>
+                        <div id="problemaReportadoHelp" class="form-text">Detalle la falla reportada. Esta descripción se usará para la orden inicial.</div>
                     </div>
 
                     <div class="d-grid gap-2 mt-5">
-                        <button type="submit" class="btn btn-warning btn-lg text-dark fw-bold">
-                            <i class="bi bi-save-fill me-2"></i>Registrar Equipo y Abrir Orden
+                        <%-- ARIA: role="button" y aria-label descriptivo --%>
+                        <button type="submit" class="btn btn-warning btn-lg text-dark fw-bold" role="button" aria-label="Registrar el nuevo equipo y abrir la orden de reparación">
+                            <i class="bi bi-save-fill me-2" aria-hidden="true"></i>Registrar Equipo y Abrir Orden
                         </button>
-                        <a href="<%= request.getContextPath() %>/vistas/tecnico/menuTecnico.jsp" class="btn btn-outline-secondary">
-                            <i class="bi bi-x-circle me-2"></i>Cancelar y Volver al Menú
+                        <%-- ARIA: role="button" y aria-label descriptivo --%>
+                        <a href="<%= request.getContextPath() %>/vistas/tecnico/menuTecnico.jsp" class="btn btn-outline-secondary" role="button" aria-label="Cancelar el registro de equipo y volver al menú principal">
+                            <i class="bi bi-x-circle me-2" aria-hidden="true"></i>Cancelar y Volver al Menú
                         </a>
                     </div>
                 </form>
