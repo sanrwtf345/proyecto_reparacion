@@ -52,7 +52,7 @@ public class ReparacionServlet extends HttpServlet {
       // 2. Colocar la lista en el request para el JSP
       request.setAttribute("listaReparaciones", listaReparaciones);
 
-      // 3. Forward al JSP de listado (Aún no creado)
+      // 3. Forward al JSP de listado
       request.getRequestDispatcher("/vistas/tecnico/listaReparaciones.jsp").forward(request, response);
 
     } catch (Exception e) {
@@ -62,7 +62,7 @@ public class ReparacionServlet extends HttpServlet {
     }
   }
 
-  // El doPost lo dejaremos vacío por ahora, ya que las acciones de estado/diagnóstico serán más complejas.
+  // El doPost lo dejaremos vacío por ahora, ya que las acciones de estado/diagnóstico serán completadas en el futuro.
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     doGet(request, response);

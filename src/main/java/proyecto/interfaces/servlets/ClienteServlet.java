@@ -1,4 +1,4 @@
-package proyecto.interfaces.servlets; // Mantengo tu paquete original
+package proyecto.interfaces.servlets;
 
 import proyecto.interfaces.dao.ClienteDAO;
 import proyecto.interfaces.dao.EquipoDAO;
@@ -6,7 +6,7 @@ import proyecto.interfaces.dao.ReparacionDAO;
 import proyecto.interfaces.entities.Cliente;
 import proyecto.interfaces.entities.Equipo;
 import proyecto.interfaces.entities.Reparacion;
-import proyecto.interfaces.entities.Usuarios; // IMPORTACIÓN AÑADIDA
+import proyecto.interfaces.entities.Usuarios;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -112,7 +112,7 @@ public class ClienteServlet extends HttpServlet {
       String telefono = request.getParameter("telefono");
       String email = request.getParameter("email");
 
-      // 2. CORRECCIÓN CLAVE: Obtener el Usuario logueado de la sesión y verificar
+      // Obtener el Usuario logueado de la sesión y verificar
       Usuarios usuarioLogueado = (Usuarios) request.getSession().getAttribute("usuarioLogueado");
 
       if (usuarioLogueado == null) {
@@ -158,7 +158,7 @@ public class ClienteServlet extends HttpServlet {
       String telefono = request.getParameter("telefono");
       String email = request.getParameter("email");
 
-      // 2. CORRECCIÓN CLAVE: Cargar el cliente existente primero para mantener el objeto Usuario asociado
+      //Cargar el cliente existente primero para mantener el objeto Usuario asociado
       Cliente cliente = clienteDAO.getById(idCliente);
       if (cliente == null) {
         throw new Exception("Error al actualizar: Cliente con ID " + idCliente + " no encontrado.");

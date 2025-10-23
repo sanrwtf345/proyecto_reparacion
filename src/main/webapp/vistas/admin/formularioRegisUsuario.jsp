@@ -22,7 +22,7 @@
     <div class="container mt-5">
         <div class="card shadow-lg mx-auto" style="max-width: 600px;">
             <div class="card-header bg-danger text-white">
-                <%-- **TÍTULO DINÁMICO en la Tarjeta** --%>
+                <%-- TÍTULO DINÁMICO en la Tarjeta --%>
                 <c:choose>
                     <c:when test="${not empty requestScope.usuario and requestScope.usuario.idUsuario > 0}">
                         <h3 class="mb-0">Editar Usuario N° ${usuario.idUsuario}</h3>
@@ -42,16 +42,18 @@
 
                 <form action="<%= request.getContextPath() %>/UsuariosController" method="POST">
 
-                    <input type="hidden" name="action" value="guardar">
+                    <%-- **CORRECCIÓN CLAVE: El valor de 'action' ahora es dinámico** --%>
+                    <input type="hidden" name="action"
+                           value="<c:choose><c:when test="${not empty requestScope.usuario and requestScope.usuario.idUsuario > 0}">actualizar</c:when><c:otherwise>guardar</c:otherwise></c:choose>">
 
-                    <%-- **PUNTO CLAVE 1: Campo Oculto para ID (Solo en Edición)** --%>
+                    <%-- Campo Oculto para ID (Solo en Edición) --%>
                     <c:if test="${not empty requestScope.usuario and requestScope.usuario.idUsuario > 0}">
                         <input type="hidden" name="idUsuario" value="${usuario.idUsuario}">
                     </c:if>
 
                     <div class="mb-3">
                         <label for="nombreUsuario" class="form-label">Nombre de Usuario (Login)</label>
-                        <%-- **PUNTO CLAVE 2: Valor Pre-llenado** --%>
+                        <%-- Valor Pre-llenado --%>
                         <input type="text" class="form-control" id="nombreUsuario" name="nombreUsuario" required
                                value="${usuario.nombreUsuario}">
                     </div>
@@ -73,11 +75,11 @@
                         <div class="col-md-6 mb-3">
                             <label for="password" class="form-label">Contraseña</label>
                             <input type="password" class="form-control" id="password" name="password"
-                                   <%-- **Contraseña: Requerida solo si es nuevo registro** --%>
-                                   <c:if test="${empty requestScope.usuario}">
+                                   <%-- Contraseña: Requerida solo si es nuevo registro --%>
+                                   <c:if test="${empty requestScope.usuario.idUsuario}">
                                        required
                                    </c:if>
-                                   placeholder="${not empty usuario ? 'Dejar vacío para NO cambiar' : 'Requerida para registrar'}">
+                                   placeholder="${not empty usuario.idUsuario ? 'Dejar vacío para NO cambiar' : 'Requerida para registrar'}">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="rol" class="form-label">Rol</label>
@@ -86,7 +88,7 @@
                                     <c:if test="${empty usuario.rol}">selected</c:if>
                                     >Seleccione el rol</option>
 
-                                <%-- **PUNTO CLAVE 3: Pre-seleccionar el rol** --%>
+                                <%-- Pre-seleccionar el rol --%>
                                 <option value="ADMIN" ${usuario.rol eq 'ADMIN' ? 'selected' : ''}>Administrador</option>
                                 <option value="TECNICO" ${usuario.rol eq 'TECNICO' ? 'selected' : ''}>Técnico</option>
 
@@ -96,7 +98,7 @@
                     </div>
 
                     <div class="d-grid gap-2 mt-4">
-                        <%-- **Texto del Botón Dinámico** --%>
+                        <%-- Texto del Botón Dinámico --%>
                         <button type="submit" class="btn btn-danger btn-lg">
                             <c:choose>
                                 <c:when test="${not empty requestScope.usuario and requestScope.usuario.idUsuario > 0}">
@@ -115,4 +117,6 @@
             </div>
         </div>
     </div>
-    <script src="
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

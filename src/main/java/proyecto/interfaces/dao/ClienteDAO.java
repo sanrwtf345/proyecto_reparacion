@@ -51,7 +51,6 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
         cliente.setEmail(rs.getString("email"));
 
         // ✅ CORRECCIÓN 1: Mapear la FK id_usuario a un objeto Usuarios (solo con el ID)
-        // Asumimos que la clase Usuarios tiene un constructor que acepta un ID o un setter.
         Usuarios usuario = new Usuarios();
         usuario.setIdUsuario(rs.getInt("id_usuario"));
         cliente.setUsuario(usuario);

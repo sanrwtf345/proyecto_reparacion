@@ -6,7 +6,7 @@ import proyecto.interfaces.dao.ReparacionDAO;
 import proyecto.interfaces.entities.Cliente;
 import proyecto.interfaces.entities.Equipo;
 import proyecto.interfaces.entities.Reparacion;
-import proyecto.interfaces.entities.Usuarios; // Necesario para la sesión
+import proyecto.interfaces.entities.Usuarios;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -44,7 +44,7 @@ public class EquipoServlet extends HttpServlet {
       // Muestra el formulario para agregar equipo a cliente existente
       mostrarFormularioAgregarEquipo(request, response);
     } else if ("listarEquipos".equals(action)) {
-      // Acción para listar (asumo que ReparcionController ya hace esto, pero lo mantenemos si es necesario)
+      // Acción para listar
       response.sendRedirect(request.getContextPath() + "/ReparacionController?action=listar");
     } else {
       // Acción por defecto (redirigir al menú o a la lista)
@@ -88,7 +88,7 @@ public class EquipoServlet extends HttpServlet {
       idUsuarioSesion = tecnicoLogueado.getIdUsuario();
     }
 
-    // 2. VERIFICACIÓN DE SESIÓN (ESTE ES EL PUNTO CRÍTICO)
+    // 2. VERIFICACIÓN DE SESIÓN
     if (idUsuarioSesion == null || idUsuarioSesion <= 0) {
       request.setAttribute("error", "Debe iniciar sesión como técnico para registrar un equipo.");
 
