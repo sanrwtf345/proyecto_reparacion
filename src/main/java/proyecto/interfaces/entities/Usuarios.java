@@ -4,7 +4,7 @@ import proyecto.interfaces.enums.RolUsuario;
 
 public class Usuarios implements Comparable {
   private int idUsuario;
-  private String nombreUsuario;
+  private String correoElectronico; // <--- CAMBIO: de nombreUsuario a correoElectronico
   private String password;
   private String nombre;
   private String apellido;
@@ -13,17 +13,19 @@ public class Usuarios implements Comparable {
   public Usuarios() {
   }
 
-  public Usuarios(String nombreUsuario, String password, String nombre, String apellido, RolUsuario rol) {
-    this.nombreUsuario = nombreUsuario;
+  // <--- CAMBIO: en el constructor
+  public Usuarios(String correoElectronico, String password, String nombre, String apellido, RolUsuario rol) {
+    this.correoElectronico = correoElectronico;
     this.password = password;
     this.nombre = nombre;
     this.apellido = apellido;
     this.rol = rol;
   }
 
-  public Usuarios(int idUsuario, String nombreUsuario, String password, String nombre, String apellido, RolUsuario rol) {
+  // <--- CAMBIO: en el constructor
+  public Usuarios(int idUsuario, String correoElectronico, String password, String nombre, String apellido, RolUsuario rol) {
     this.idUsuario = idUsuario;
-    this.nombreUsuario = nombreUsuario;
+    this.correoElectronico = correoElectronico;
     this.password = password;
     this.nombre = nombre;
     this.apellido = apellido;
@@ -35,8 +37,9 @@ public class Usuarios implements Comparable {
     this.idUsuario = idUsuario;
   }
 
-  public void setNombreUsuario(String nombreUsuario) {
-    this.nombreUsuario = nombreUsuario;
+  // <--- CAMBIO: getters y setters
+  public void setCorreoElectronico(String correoElectronico) {
+    this.correoElectronico = correoElectronico;
   }
 
   public void setPassword(String password) {
@@ -60,8 +63,9 @@ public class Usuarios implements Comparable {
     return idUsuario;
   }
 
-  public String getNombreUsuario() {
-    return nombreUsuario;
+  // <--- CAMBIO: getters y setters
+  public String getCorreoElectronico() {
+    return correoElectronico;
   }
 
   public String getPassword() {
@@ -83,9 +87,10 @@ public class Usuarios implements Comparable {
   //to string
   @Override
   public String toString() {
+    // <--- CAMBIO: actualizado el toString
     return "usuarios{" +
         "idUsuario=" + idUsuario +
-        ", nombreUsuario='" + nombreUsuario + '\'' +
+        ", correoElectronico='" + correoElectronico + '\'' +
         ", password='" + password + '\'' +
         ", nombre='" + nombre + '\'' +
         ", apellido='" + apellido + '\'' +
@@ -94,7 +99,7 @@ public class Usuarios implements Comparable {
 
   @Override
   public int compareTo(Object o) {
-    Usuarios otro= (Usuarios) o;
+    Usuarios otro = (Usuarios) o;
     int comparacionApellido = this.apellido.compareTo(otro.apellido);
 
     if (comparacionApellido != 0) {

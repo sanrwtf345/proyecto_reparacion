@@ -16,12 +16,14 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
   private static final String SQL_GETALL =
       "SELECT * FROM usuarios ORDER BY id_usuario";
 
+  // <--- CAMBIO: nombre_usuario -> correo_electronico
   private static final String SQL_INSERT =
-      "INSERT INTO usuarios (nombre_usuario, password, nombre, apellido, rol) " +
+      "INSERT INTO usuarios (correo_electronico, password, nombre, apellido, rol) " +
           "VALUES (?, ?, ?, ?, ?)";
 
+  // <--- CAMBIO: nombre_usuario -> correo_electronico
   private static final String SQL_UPDATE =
-      "UPDATE usuarios SET nombre_usuario = ?, password = ?, nombre = ?, apellido = ?, rol = ? " +
+      "UPDATE usuarios SET correo_electronico = ?, password = ?, nombre = ?, apellido = ?, rol = ? " +
           "WHERE id_usuario = ?";
 
   private static final String SQL_DELETE =
@@ -30,9 +32,10 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
   private static final String SQL_GETBYID =
       "SELECT * FROM usuarios WHERE id_usuario = ?";
 
-  private static final String SQL_GETBYNOMBREUSUARIO =
-      "SELECT id_usuario, nombre_usuario, password, nombre, apellido, rol " +
-          "FROM usuarios WHERE nombre_usuario = ?";
+  // <--- CAMBIO: Renombrada la constante y la consulta
+  private static final String SQL_GETBYCORREO =
+      "SELECT id_usuario, correo_electronico, password, nombre, apellido, rol " +
+          "FROM usuarios WHERE correo_electronico = ?";
 
   @Override
   public List<Usuarios> getAll() {
@@ -48,7 +51,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
       while (rs.next()) {
         Usuarios usuario = new Usuarios();
         usuario.setIdUsuario(rs.getInt("id_usuario"));
-        usuario.setNombreUsuario(rs.getString("nombre_usuario"));
+        usuario.setCorreoElectronico(rs.getString("correo_electronico")); // <--- CAMBIO
         usuario.setPassword(rs.getString("password"));
         usuario.setNombre(rs.getString("nombre"));
         usuario.setApellido(rs.getString("apellido"));
@@ -77,7 +80,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
     try {
       pst = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
 
-      pst.setString(1, usuario.getNombreUsuario());
+      pst.setString(1, usuario.getCorreoElectronico()); // <--- CAMBIO
       pst.setString(2, usuario.getPassword());
       pst.setString(3, usuario.getNombre());
       pst.setString(4, usuario.getApellido());
@@ -114,7 +117,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
       try {
         pst = conn.prepareStatement(SQL_UPDATE);
 
-        pst.setString(1, usuario.getNombreUsuario());
+        pst.setString(1, usuario.getCorreoElectronico()); // <--- CAMBIO
         pst.setString(2, usuario.getPassword());
         pst.setString(3, usuario.getNombre());
         pst.setString(4, usuario.getApellido());
@@ -162,15 +165,16 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
     }
   }
 
-  public Usuarios getByNombreUsuario(String nombreUsuario) {
+  // <--- CAMBIO: Renombrado el método y su parámetro
+  public Usuarios getByCorreoElectronico(String correoElectronico) {
     Connection conn = obtenerConexion();
     PreparedStatement pst = null;
     ResultSet rs = null;
     Usuarios usuario = null;
 
     try {
-      pst = conn.prepareStatement(SQL_GETBYNOMBREUSUARIO);
-      pst.setString(1, nombreUsuario);
+      pst = conn.prepareStatement(SQL_GETBYCORREO); // <--- CAMBIO
+      pst.setString(1, correoElectronico); // <--- CAMBIO
 
       rs = pst.executeQuery();
 
@@ -178,7 +182,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
         usuario = new Usuarios();
 
         usuario.setIdUsuario(rs.getInt("id_usuario"));
-        usuario.setNombreUsuario(rs.getString("nombre_usuario"));
+        usuario.setCorreoElectronico(rs.getString("correo_electronico")); // <--- CAMBIO
         usuario.setPassword(rs.getString("password"));
         usuario.setNombre(rs.getString("nombre"));
         usuario.setApellido(rs.getString("apellido"));
@@ -190,8 +194,8 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
       }
 
     } catch (SQLException e) {
-      System.err.println("Error al buscar usuario por nombre: " + e.getMessage());
-      throw new RuntimeException("Error en Base de Datos al buscar usuario", e);
+      System.err.println("Error al buscar usuario por correo: " + e.getMessage()); // <--- CAMBIO (cosmético)
+      throw new RuntimeException("Error en Base de Datos al buscar usuario por correo", e); // <--- CAMBIO (cosmético)
     } finally {
       try {
         if (rs != null) rs.close();
@@ -199,6 +203,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
         if (conn != null) conn.close();
       } catch (SQLException e) {
         e.printStackTrace();
+
       }
     }
     return usuario;
@@ -221,7 +226,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
         // Mapeo si se encuentra el registro
         usuario = new Usuarios();
         usuario.setIdUsuario(rs.getInt("id_usuario"));
-        usuario.setNombreUsuario(rs.getString("nombre_usuario"));
+        usuario.setCorreoElectronico(rs.getString("correo_electronico")); // <--- CAMBIO
         usuario.setPassword(rs.getString("password"));
         usuario.setNombre(rs.getString("nombre"));
         usuario.setApellido(rs.getString("apellido"));

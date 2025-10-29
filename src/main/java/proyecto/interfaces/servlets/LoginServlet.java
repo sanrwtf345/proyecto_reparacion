@@ -29,14 +29,14 @@ public class LoginServlet extends HttpServlet {
       throws ServletException, IOException {
 
     // 1. Obtener datos del formulario
-    String nombreUsuario = request.getParameter("nombreUsuario");
+    String correoElectronico = request.getParameter("correoElectronico"); // <--- CAMBIO: Parámetro del form
     String password = request.getParameter("password");
 
     Usuarios usuario = null;
 
     try {
-      // 2. Llama al DAO para buscar el usuario por nombre de usuario
-      usuario = usuarioDAO.getByNombreUsuario(nombreUsuario);
+      // 2. Llama al DAO para buscar el usuario por correo
+      usuario = usuarioDAO.getByCorreoElectronico(correoElectronico); // <--- CAMBIO: Método del DAO
 
       // 3. Verifica la Contraseña
       if (usuario != null && usuario.getPassword().equals(password)) {

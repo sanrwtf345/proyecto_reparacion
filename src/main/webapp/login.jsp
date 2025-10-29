@@ -19,6 +19,7 @@
      <div class="login-card card p-4 shadow-lg">
          <h2 class="card-title text-center mb-4">Iniciar Sesión</h2>
 
+         <%-- Esto sigue igual, muestra el error enviado desde el LoginServlet --%>
          <c:if test="${not empty error}">
              <div class="alert alert-danger" role="alert">
                  ${error}
@@ -26,10 +27,12 @@
          </c:if>
 
          <form action="LoginServlet" method="post">
+
+             <%-- AQUÍ ESTÁN LOS CAMBIOS --%>
              <div class="mb-3">
-                 <label for="inputNombreUsuario" class="form-label">Nombre de Usuario</label>
-                 <input type="text" class="form-control" id="inputNombreUsuario" name="nombreUsuario"
-                        placeholder="Ingresa tu nombre de usuario" required>
+                 <label for="inputCorreo" class="form-label">Correo Electrónico</label>
+                 <input type="email" class="form-control" id="inputCorreo" name="correoElectronico"
+                        placeholder="Ingresa tu correo" required>
              </div>
 
              <div class="mb-3">

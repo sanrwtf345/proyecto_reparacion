@@ -7,30 +7,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <%-- Título dinámico para la pestaña del navegador --%>
-    <c:choose>
-        <c:when test="${not empty requestScope.usuario and requestScope.usuario.idUsuario > 0}">
-            <title>Editar Usuario N° ${usuario.idUsuario}</title>
-        </c:when>
-        <c:otherwise>
-            <title>Registro de Nuevo Usuario</title>
-        </c:otherwise>
-    </c:choose>
+
+    <%-- Título dinámico (obtenido del servlet) --%>
+    <title>${titulo}</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-5">
         <div class="card shadow-lg mx-auto" style="max-width: 600px;">
             <div class="card-header bg-danger text-white">
-                <%-- TÍTULO DINÁMICO en la Tarjeta --%>
-                <c:choose>
-                    <c:when test="${not empty requestScope.usuario and requestScope.usuario.idUsuario > 0}">
-                        <h3 class="mb-0">Editar Usuario N° ${usuario.idUsuario}</h3>
-                    </c:when>
-                    <c:otherwise>
-                        <h3 class="mb-0">Registrar Nuevo Usuario</h3>
-                    </c:otherwise>
-                </c:choose>
+
+                <%-- TÍTULO DINÁMICO (obtenido del servlet) --%>
+                <h3 class="mb-0">${titulo}</h3>
+
             </div>
             <div class="card-body">
 
@@ -51,12 +41,15 @@
                         <input type="hidden" name="idUsuario" value="${usuario.idUsuario}">
                     </c:if>
 
+                    <%-- ########## SECCIÓN MODIFICADA ########## --%>
                     <div class="mb-3">
-                        <label for="nombreUsuario" class="form-label">Nombre de Usuario (Login)</label>
+                        <label for="correoElectronico" class="form-label">Correo Electrónico (Login)</label>
                         <%-- Valor Pre-llenado --%>
-                        <input type="text" class="form-control" id="nombreUsuario" name="nombreUsuario" required
-                               value="${usuario.nombreUsuario}">
+                        <input type="email" class="form-control" id="correoElectronico" name="correoElectronico" required
+                               value="${usuario.correoElectronico}">
                     </div>
+                    <%-- ########################################## --%>
+
 
                     <div class="row">
                         <div class="col-md-6 mb-3">

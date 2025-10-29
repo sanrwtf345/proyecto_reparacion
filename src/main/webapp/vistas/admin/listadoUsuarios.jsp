@@ -31,7 +31,7 @@
             <thead class="table-dark">
                 <tr>
                     <th>ID</th>
-                    <th>Usuario</th>
+                    <th>Correo Electrónico</th> <%-- <--- CAMBIO: Título de la columna --%>
                     <th>Nombre Completo</th>
                     <th>Rol</th>
                     <th>Acciones</th>
@@ -42,7 +42,7 @@
                 <c:forEach var="user" items="${requestScope.listaUsuarios}">
                     <tr>
                         <td>${user.idUsuario}</td>
-                        <td>${user.nombreUsuario}</td>
+                        <td>${user.correoElectronico}</td> <%-- <--- CAMBIO: Dato de la columna --%>
                         <td>${user.nombre} ${user.apellido}</td>
                         <td>${user.rol}</td>
                         <td>
@@ -50,15 +50,18 @@
                             <c:if test="${user.idUsuario != sessionScope.usuarioLogueado.idUsuario}">
                                 <a href="<%= request.getContextPath() %>/UsuariosController?action=eliminar&idUsuario=${user.idUsuario}"
                                    class="btn btn-danger btn-sm"
-                                   onclick="return confirm('¿Estás seguro de que deseas eliminar a ${user.nombreUsuario}?');"
-                                   aria-label="Eliminar usuario ${user.nombreUsuario}">
+                                   <%-- <--- CAMBIO: Texto de confirmación --%>
+                                   onclick="return confirm('¿Estás seguro de que deseas eliminar a ${user.correoElectronico}?');"
+                                   <%-- <--- CAMBIO: Etiqueta de accesibilidad --%>
+                                   aria-label="Eliminar usuario ${user.correoElectronico}">
                                     Eliminar
                                 </a>
                             </c:if>
 
                             <a href="<%= request.getContextPath() %>/UsuariosController?action=editar&idUsuario=${user.idUsuario}"
                                class="btn btn-info btn-sm text-white"
-                               aria-label="Editar usuario ${user.nombreUsuario}">Editar</a>
+                               <%-- <--- CAMBIO: Etiqueta de accesibilidad --%>
+                               aria-label="Editar usuario ${user.correoElectronico}">Editar</a>
                         </td>
                     </tr>
                 </c:forEach>
