@@ -2,74 +2,80 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page isELIgnored="false" %>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Gestión de Usuarios - Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container mt-5" role="main">
-        <h1 class="mb-4" id="listado-title">Gestión de Usuarios</h1>
+<%--
+  1. Incluimos el HEADER.
+  Le pasamos el título "Gestión de Usuarios" para el <title> de la página.
+--%>
+<jsp:include page="/vistas/admin/comun/headerAdmin.jsp">
+    <jsp:param name="tituloPagina" value="Gestión de Usuarios"/>
+</jsp:include>
 
-        <%-- Contenedor de mensajes de estado con rol ARIA 'alert' para que sean leídos --%>
-        <div role="alert" aria-live="assertive">
-            <c:if test="${not empty sessionScope.error}">
-                <div class="alert alert-danger">${sessionScope.error}</div>
-                <c:remove var="error" scope="session"/>
-            </c:if>
-            <c:if test="${not empty sessionScope.success}">
-                <div class="alert alert-success">${sessionScope.success}</div>
-                <c:remove var="success" scope="session"/>
-            </c:if>
-        </div>
 
-        <%-- Tabla de listado de usuarios --%>
-        <%-- ARIA: Tabla simple HTML, se añade aria-labelledby para asociar el título principal --%>
-        <table class="table table-striped table-bordered" aria-labelledby="listado-title">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Correo Electrónico</th> <%-- <--- CAMBIO: Título de la columna --%>
-                    <th>Nombre Completo</th>
-                    <th>Rol</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <%-- Iteramos sobre la lista de usuarios obtenida del Servlet --%>
-                <c:forEach var="user" items="${requestScope.listaUsuarios}">
-                    <tr>
-                        <td>${user.idUsuario}</td>
-                        <td>${user.correoElectronico}</td> <%-- <--- CAMBIO: Dato de la columna --%>
-                        <td>${user.nombre} ${user.apellido}</td>
-                        <td>${user.rol}</td>
-                        <td>
-                            <%-- Solo mostramos el botón de eliminar si NO es la cuenta del admin logueado --%>
-                            <c:if test="${user.idUsuario != sessionScope.usuarioLogueado.idUsuario}">
-                                <a href="<%= request.getContextPath() %>/UsuariosController?action=eliminar&idUsuario=${user.idUsuario}"
-                                   class="btn btn-danger btn-sm"
-                                   <%-- <--- CAMBIO: Texto de confirmación --%>
-                                   onclick="return confirm('¿Estás seguro de que deseas eliminar a ${user.correoElectronico}?');"
-                                   <%-- <--- CAMBIO: Etiqueta de accesibilidad --%>
-                                   aria-label="Eliminar usuario ${user.correoElectronico}">
-                                    Eliminar
-                                </a>
-                            </c:if>
+<%--
+  INICIO DEL CONTENIDO ESPECÍFICO DE ESTA PÁGINA
+  (Ya no necesitamos el <div class="container..."> porque está en el header)
+--%>
+<h1 class="mb-4" id="listado-title">Gestión de Usuarios</h1>
 
-                            <a href="<%= request.getContextPath() %>/UsuariosController?action=editar&idUsuario=${user.idUsuario}"
-                               class="btn btn-info btn-sm text-white"
-                               <%-- <--- CAMBIO: Etiqueta de accesibilidad --%>
-                               aria-label="Editar usuario ${user.correoElectronico}">Editar</a>
-                        </td>
-                    </tr>
-                </c:forEach>
-            </tbody>
-        </table>
+<%-- Contenedor de mensajes de estado con rol ARIA 'alert' para que sean leídos --%>
+<div role="alert" aria-live="assertive">
+    <c:if test="${not empty sessionScope.error}">
+        <div class="alert alert-danger">${sessionScope.error}</div>
+        <c:remove var="error" scope="session"/>
+    </c:if>
+    <c:if test="${not empty sessionScope.success}">
+        <div class="alert alert-success">${sessionScope.success}</div>
+        <c:remove var="success" scope="session"/>
+    </c:if>
+</div>
 
-        <a href="<%= request.getContextPath() %>/vistas/admin/menuAdmin.jsp" class="btn btn-secondary" role="button">Volver al Menú</a>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<%-- Tabla de listado de usuarios --%>
+<table class="table table-striped table-bordered" aria-labelledby="listado-title">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Correo Electrónico</th>
+            <th>Nombre Completo</th>
+            <th>Rol</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <%-- Iteramos sobre la lista de usuarios obtenida del Servlet --%>
+        <c:forEach var="user" items="${requestScope.listaUsuarios}">
+            <tr>
+                <td>${user.idUsuario}</td>
+                <td>${user.correoElectronico}</td>
+                <td>${user.nombre} ${user.apellido}</td>
+                <td>${user.rol}</td>
+                <td>
+                    <%-- Solo mostramos el botón de eliminar si NO es la cuenta del admin logueado --%>
+                    <c:if test="${user.idUsuario != sessionScope.usuarioLogueado.idUsuario}">
+                        <a href="<%= request.getContextPath() %>/UsuariosController?action=eliminar&idUsuario=${user.idUsuario}"
+                           class="btn btn-danger btn-sm"
+                           onclick="return confirm('¿Estás seguro de que deseas eliminar a ${user.correoElectronico}?');"
+                           aria-label="Eliminar usuario ${user.correoElectronico}">
+                            Eliminar
+                        </a>
+                    </c:if>
+
+                    <a href="<%= request.getContextPath() %>/UsuariosController?action=editar&idUsuario=${user.idUsuario}"
+                       class="btn btn-info btn-sm text-white"
+                       aria-label="Editar usuario ${user.correoElectronico}">Editar</a>
+                </td>
+            </tr>
+        </c:forEach>
+    </tbody>
+</table>
+
+<a href="<%= request.getContextPath() %>/vistas/admin/menuAdmin.jsp" class="btn btn-secondary" role="button">Volver al Menú</a>
+
+<%--
+  FIN DEL CONTENIDO ESPECÍFICO
+--%>
+
+
+<%--
+  2. Incluimos el FOOTER.
+--%>
+<jsp:include page="/vistas/admin/comun/footerAdmin.jsp" />
