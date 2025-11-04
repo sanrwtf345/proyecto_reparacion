@@ -21,14 +21,37 @@ import java.util.List;
 @WebFilter("/*") // Aplica el filtro a todas las URLs del proyecto
 public class AuthFilter implements Filter {
 
+  // --- Listas de Rutas Mejoradas ---
+
   // Rutas que NO requieren iniciar sesión
-  private static final List<String> PUBLIC_PATHS = Arrays.asList(
+  private static final List<String> RUTAS_PUBLICAS = Arrays.asList(
       "/login.jsp",
       "/LoginServlet",
-      "/LogoutServlet",
-      "/css/",            // Permite acceder a la carpeta de CSS
-      "/js/",             // Permite acceder a la carpeta de JavaScript
-      "/images/"          // Permite acceder a imágenes/recursos estáticos
+      "/LogoutServlet"
+  );
+
+  // Rutas de recursos estáticos (CSS, JS, Imágenes)
+  private static final List<String> RUTAS_ESTATICAS = Arrays.asList(
+      "/css/",
+      "/js/",
+      "/images/",
+      "/img/" // Añadido por si acaso
+  );
+
+  // Rutas que SÓLO el ADMIN puede acceder
+  private static final List<String> RUTAS_ADMIN = Arrays.asList(
+      "/vistas/admin/",
+      "/UsuariosController" // ¡IMPORTANTE! Proteger el Servlet de Usuarios
+  );
+
+  // Rutas que ADMIN o TÉCNICO pueden acceder
+  private static final List<String> RUTAS_TECNICO = Arrays.asList(
+      "/vistas/tecnico/",
+      "/ClienteController",
+      "/EquipoController",
+      "/ReparacionController",
+      "/ClienteEquipoController"
+      // (Verifica que los nombres de tus servlets de técnico sean correctos)
   );
 
   @Override
@@ -42,44 +65,69 @@ public class AuthFilter implements Filter {
 
     HttpServletRequest req = (HttpServletRequest) request;
     HttpServletResponse res = (HttpServletResponse) response;
+    HttpSession session = req.getSession(false); // No crear sesión si no existe
 
-    // No crear la sesión si no existe
-    HttpSession session = req.getSession(false);
-
-    // 1. Obtener la ruta solicitada (ej: /vistas/tecnico/menuTecnico.jsp)
     String path = req.getRequestURI().substring(req.getContextPath().length());
 
-    // 2. Comprobar si la ruta es pública o un recurso estático (CSS, JS, etc.)
-    boolean isPublicPath = PUBLIC_PATHS.stream().anyMatch(path::startsWith);
-    boolean isStaticResource = path.endsWith(".css") || path.endsWith(".js") || path.endsWith(".png") || path.endsWith(".jpg");
+    // 1. Comprobar si es un recurso estático (CSS, JS, etc.)
+    boolean esEstatico = RUTAS_ESTATICAS.stream().anyMatch(path::startsWith);
+    if (esEstatico) {
+      chain.doFilter(request, response);
+      return;
+    }
 
-    // 3. Obtener el usuario de la sesión
+    // 2. Comprobar si la ruta es pública
+    boolean esPublica = RUTAS_PUBLICAS.stream().anyMatch(path::equals);
     Usuarios usuarioLogueado = (session != null) ? (Usuarios) session.getAttribute("usuarioLogueado") : null;
+
 
     // =========================================================
     // LÓGICA DE CONTROL DE ACCESO
     // =========================================================
 
-    // Permitir el paso si es la raíz, una página pública o un recurso estático
-    if (isPublicPath || isStaticResource || path.equals("/")) {
+    // CASO 1: Acceso a una ruta pública (o la raíz)
+    if (esPublica || path.equals("/")) {
+
+      // MEJORA: Si es pública PERO ya está logueado, redirigir a su menú
+      // (Implementación de la lógica del PDF )
+      if (usuarioLogueado != null && path.equals("/login.jsp")) {
+        if (usuarioLogueado.getRol() == RolUsuario.ADMIN) {
+          res.sendRedirect(req.getContextPath() + "/vistas/admin/menuAdmin.jsp");
+        } else {
+          res.sendRedirect(req.getContextPath() + "/vistas/tecnico/menuTecnico.jsp");
+        }
+        return;
+      }
+
+      // Si no está logueado y va al login, permitir.
       chain.doFilter(request, response);
       return;
     }
 
-    // CASO 1: Bloquear si no está logueado
+    // CASO 2: No es ruta pública y NO está logueado
+    // (Implementación centralizada de la lógica del PDF [cite: 93])
     if (usuarioLogueado == null) {
-      // Usuario NO logueado: Redirigir al login
       res.sendRedirect(req.getContextPath() + "/login.jsp");
       return;
     }
 
-    // CASO 2: Autorización por Rol
+    // CASO 3: Está logueado. Verificar autorización por Rol
     RolUsuario rol = usuarioLogueado.getRol();
 
-    // Restricción: Solo ADMIN puede acceder a rutas que comienzan con /vistas/admin/
-    if (path.startsWith("/vistas/admin/") && rol != RolUsuario.ADMIN) {
-      // Si un TECNICO intenta acceder a una vista de ADMIN
-      res.sendError(HttpServletResponse.SC_FORBIDDEN, "Acceso denegado. Se requiere rol de Administrador para esta función.");
+    // 3.1: Proteger rutas de ADMIN
+    boolean esRutaAdmin = RUTAS_ADMIN.stream().anyMatch(path::startsWith);
+    if (esRutaAdmin && rol != RolUsuario.ADMIN) {
+      // Un TECNICO intenta acceder a una ruta de ADMIN
+      res.sendError(HttpServletResponse.SC_FORBIDDEN, "Acceso denegado. Se requiere rol de Administrador.");
+      return;
+    }
+
+    // 3.2: Proteger rutas de TÉCNICO
+    // (Asumimos que el ADMIN SÍ puede ver las rutas de TÉCNICO)
+    boolean esRutaTecnico = RUTAS_TECNICO.stream().anyMatch(path::startsWith);
+    if (esRutaTecnico && (rol != RolUsuario.TECNICO && rol != RolUsuario.ADMIN)) {
+      // Un usuario con rol desconocido (si lo hubiera) intenta acceder
+      res.sendError(HttpServletResponse.SC_FORBIDDEN, "Acceso denegado.");
       return;
     }
 

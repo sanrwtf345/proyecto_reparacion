@@ -3,6 +3,7 @@ package proyecto.interfaces.servlets;
 import proyecto.interfaces.dao.UsuariosDAO;
 import proyecto.interfaces.entities.Usuarios;
 import proyecto.interfaces.enums.RolUsuario;
+import proyecto.interfaces.utils.PasswordUtil; // <--- PASO 1: IMPORTAR LA UTILIDAD
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -29,18 +30,20 @@ public class LoginServlet extends HttpServlet {
       throws ServletException, IOException {
 
     // 1. Obtener datos del formulario
-    String correoElectronico = request.getParameter("correoElectronico"); // <--- CAMBIO: Parámetro del form
-    String password = request.getParameter("password");
+    String correoElectronico = request.getParameter("correoElectronico");
+    String password = request.getParameter("password"); // Contraseña en TEXTO PLANO
 
     Usuarios usuario = null;
 
     try {
       // 2. Llama al DAO para buscar el usuario por correo
-      usuario = usuarioDAO.getByCorreoElectronico(correoElectronico); // <--- CAMBIO: Método del DAO
+      // (En la BD, la contraseña está como HASH)
+      usuario = usuarioDAO.getByCorreoElectronico(correoElectronico);
 
+      // --- PASO 2: VERIFICAR LA CONTRASEÑA CON BCRYPT ---
+      // (Implementación de la página 15 del PDF )
       // 3. Verifica la Contraseña
-      if (usuario != null && usuario.getPassword().equals(password)) {
-
+      if (usuario != null && PasswordUtil.verifyPassword(password, usuario.getPassword())) {
         // --- Login Exitoso ---
         HttpSession session = request.getSession();
 
@@ -59,6 +62,7 @@ public class LoginServlet extends HttpServlet {
 
       } else {
         // --- Login Fallido ---
+        // (usuario == null O la contraseña BCrypt no coincidió)
         request.setAttribute("error", "Credenciales incorrectas o usuario no encontrado.");
         request.getRequestDispatcher("/login.jsp").forward(request, response);
       }

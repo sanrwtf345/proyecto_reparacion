@@ -13,7 +13,7 @@
 
 
 <%--
-  INICIO DEL CONTENIDO ESPECÍFICO DE ESTA PÁGINA
+  INICIO DEL CONTENIDO ESPECÍFICOS DE ESTA PÁGINA
   (El div 'container' ya no es necesario, lo provee el header)
 --%>
 <div class="card shadow-lg mx-auto" style="max-width: 600px;">
@@ -65,16 +65,23 @@
                 </div>
             </div>
 
+
+            <%-- ########## SECCIÓN CORREGIDA ########## --%>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="password" class="form-label">Contraseña</label>
                     <input type="password" class="form-control" id="password" name="password"
-                           <%-- Contraseña: Requerida solo si es nuevo registro --%>
-                           <c:if test="${empty requestScope.usuario.idUsuario}">
+
+                           <%-- CORRECCIÓN 1: Contraseña es requerida si el ID es 0 (Nuevo) --%>
+                           <c:if test="${usuario.idUsuario == 0}">
                                required
                            </c:if>
-                           placeholder="${not empty usuario.idUsuario ? 'Dejar vacío para NO cambiar' : 'Requerida para registrar'}">
+
+                           <%-- CORRECCIÓN 2: El placeholder cambia si el ID es > 0 (Edición) --%>
+                           placeholder="${usuario.idUsuario > 0 ? 'Dejar vacío para NO cambiar' : 'Requerida para registrar'}">
                 </div>
+            <%-- ######################################## --%>
+
                 <div class="col-md-6 mb-3">
                     <label for="rol" class="form-label">Rol</label>
                     <select class="form-select" id="rol" name="rol" required>

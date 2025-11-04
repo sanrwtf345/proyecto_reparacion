@@ -3,6 +3,7 @@ package proyecto.interfaces.servlets;
 import proyecto.interfaces.dao.UsuariosDAO;
 import proyecto.interfaces.entities.Usuarios;
 import proyecto.interfaces.enums.RolUsuario;
+import proyecto.interfaces.utils.PasswordUtil; // <--- PASO 1: IMPORTAR LA UTILIDAD
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -20,10 +21,10 @@ public class UsuarioServlet extends HttpServlet {
 
   @Override
   public void init() throws ServletException {
-    // Inicializa el DAO para la conexión a la base de datos
     this.usuarioDAO = new UsuariosDAO();
   }
 
+  // ... (El método doGet no cambia) ...
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String action = request.getParameter("action");
@@ -57,6 +58,7 @@ public class UsuarioServlet extends HttpServlet {
     }
   }
 
+
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String action = request.getParameter("action");
@@ -70,9 +72,7 @@ public class UsuarioServlet extends HttpServlet {
     }
   }
 
-  /**
-   * Muestra el formulario vacío para creación (idUsuario=0) o precargado para edición (idUsuario > 0).
-   */
+  // ... (El método mostrarFormulario no cambia) ...
   private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response, int idUsuario) throws Exception {
     Usuarios usuario;
     if (idUsuario == 0) {
@@ -93,48 +93,46 @@ public class UsuarioServlet extends HttpServlet {
     request.getRequestDispatcher("/vistas/admin/formularioRegisUsuario.jsp").forward(request, response);
   }
 
+
   private void guardarUsuario(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
     // 1. Obtener parámetros del formulario
-    String correoElectronico = request.getParameter("correoElectronico"); // <--- CAMBIO
-    String password = request.getParameter("password");
+    String correoElectronico = request.getParameter("correoElectronico");
+    String password = request.getParameter("password"); // Contraseña en TEXTO PLANO
     String nombre = request.getParameter("nombre");
     String apellido = request.getParameter("apellido");
     String rolStr = request.getParameter("rol");
 
     // 2. Validación
-    // <--- CAMBIO: Validación de correo
     if (correoElectronico == null || correoElectronico.trim().isEmpty() || password == null || password.trim().isEmpty()) {
       request.setAttribute("error", "Los campos de Correo Electrónico y Contraseña son obligatorios.");
-      // Volvemos al formulario para mostrar el error
       request.getRequestDispatcher("/vistas/admin/formularioRegisUsuario.jsp").forward(request, response);
       return;
     }
 
     try {
       Usuarios nuevoUsuario = new Usuarios();
-      nuevoUsuario.setCorreoElectronico(correoElectronico); // <--- CAMBIO
-      nuevoUsuario.setPassword(password);
+      nuevoUsuario.setCorreoElectronico(correoElectronico);
       nuevoUsuario.setNombre(nombre);
       nuevoUsuario.setApellido(apellido);
-
-      // Convertir String a Enum
       nuevoUsuario.setRol(RolUsuario.valueOf(rolStr));
+
+      // --- PASO 2: HASHEAR LA CONTRASEÑA ---
+      // (Implementación de la página 15 del PDF )
+      String passwordHasheada = PasswordUtil.hashPassword(password);
+      nuevoUsuario.setPassword(passwordHasheada); // Guardamos el HASH, no el texto plano
+      // -------------------------------------
 
       // Guardar en la base de datos
       usuarioDAO.insert(nuevoUsuario);
 
-      // Redirigir al listado con mensaje de éxito
-      // <--- CAMBIO: Mensaje de éxito
       request.getSession().setAttribute("success", "Usuario '" + correoElectronico + "' registrado exitosamente.");
       response.sendRedirect(request.getContextPath() + "/UsuariosController?action=listar");
 
     } catch (IllegalArgumentException e) {
-      // Error si el rol no existe o el enum falla
       request.setAttribute("error", "Error en el rol seleccionado: " + rolStr);
       request.getRequestDispatcher("/vistas/admin/formularioRegisUsuario.jsp").forward(request, response);
     } catch (Exception e) {
-      // Error de BD (ej. correo duplicado, si la BD lo maneja)
       request.setAttribute("error", "Error al guardar el usuario: " + e.getMessage());
       request.getRequestDispatcher("/vistas/admin/formularioRegisUsuario.jsp").forward(request, response);
     }
@@ -144,33 +142,38 @@ public class UsuarioServlet extends HttpServlet {
     try {
       // 1. Obtener ID y nuevos parámetros
       int idUsuario = Integer.parseInt(request.getParameter("idUsuario"));
-      String correoElectronico = request.getParameter("correoElectronico"); // <--- CAMBIO
-      String password = request.getParameter("password");
+      String correoElectronico = request.getParameter("correoElectronico");
+      String password = request.getParameter("password"); // Contraseña en TEXTO PLANO (o vacía)
       String nombre = request.getParameter("nombre");
       String apellido = request.getParameter("apellido");
       String rolStr = request.getParameter("rol");
 
-      // 2. Cargar el objeto existente para preservar cualquier dato no enviado (o el ID)
+      // 2. Cargar el objeto existente
       Usuarios usuarioAActualizar = usuarioDAO.getById(idUsuario);
       if (usuarioAActualizar == null) {
         throw new Exception("Usuario con ID " + idUsuario + " no encontrado para actualizar.");
       }
 
       // 3. Aplicar cambios
-      usuarioAActualizar.setCorreoElectronico(correoElectronico); // <--- CAMBIO
+      usuarioAActualizar.setCorreoElectronico(correoElectronico);
       usuarioAActualizar.setNombre(nombre);
       usuarioAActualizar.setApellido(apellido);
       usuarioAActualizar.setRol(RolUsuario.valueOf(rolStr));
 
-      // La contraseña solo se actualiza si el campo no está vacío
+      // --- PASO 3: HASHEAR LA CONTRASEÑA (SÓLO SI SE CAMBIÓ) ---
+      // (Implementación de la página 15 del PDF )
       if (password != null && !password.trim().isEmpty()) {
-        usuarioAActualizar.setPassword(password);
+        // El usuario escribió una nueva contraseña en el formulario
+        String passwordHasheada = PasswordUtil.hashPassword(password);
+        usuarioAActualizar.setPassword(passwordHasheada);
       }
+      // Si el campo 'password' vino vacío, no hacemos nada
+      // y se conserva la contraseña (hash) anterior en la BD.
+      // --------------------------------------------------------
 
       // 4. Actualizar en BD
       usuarioDAO.update(usuarioAActualizar);
 
-      // <--- CAMBIO: Mensaje de éxito
       request.getSession().setAttribute("success", "Usuario '" + correoElectronico + "' actualizado exitosamente.");
       response.sendRedirect(request.getContextPath() + "/UsuariosController?action=listar");
 
@@ -191,6 +194,7 @@ public class UsuarioServlet extends HttpServlet {
   }
 
 
+  // ... (El método listarUsuarios no cambia) ...
   private void listarUsuarios(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     List<Usuarios> listaUsuarios = usuarioDAO.getAll();
     request.setAttribute("listaUsuarios", listaUsuarios);
@@ -199,6 +203,7 @@ public class UsuarioServlet extends HttpServlet {
     request.getRequestDispatcher("/vistas/admin/listadoUsuarios.jsp").forward(request, response);
   }
 
+  // ... (El método eliminarUsuario no cambia) ...
   private void eliminarUsuario(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
     try {
       int idUsuario = Integer.parseInt(request.getParameter("idUsuario"));
