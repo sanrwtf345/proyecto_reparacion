@@ -1,0 +1,23 @@
+/* --- Estilos Generales del Panel de Admin --- */
+body {
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Estilos de menuAdmin.jsp */
+.card-menu {
+    border: none;
+    border-radius: 15px;
+    transition: transform 0.3s;
+}
+.card-menu:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo para que el main crezca y empuje el footer hacia abajo */
+.main-content {
+    flex: 1;
+}
