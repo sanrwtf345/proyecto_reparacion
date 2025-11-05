@@ -12,13 +12,15 @@
 <h1 class="mb-4 text-center">Panel de Tareas Operativas</h1>
 
 <%-- Bloque para mostrar mensajes de éxito/error --%>
-<c:if test="${not empty sessionScope.mensajeExito}">
+<c:if test="${not empty sessionScope.success}">
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>${sessionScope.mensajeExito}
+        <i class="bi bi-check-circle-fill me-2"></i>${sessionScope.success}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-    <c:remove var="mensajeExito" scope="session"/>
+    <c:remove var="success" scope="session"/>
 </c:if>
+<%-- ========================================================= --%>
+
 
 <c:if test="${not empty sessionScope.error}">
     <div class="alert alert-danger alert-dismissible fade show" role="alert">

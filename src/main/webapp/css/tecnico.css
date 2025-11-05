@@ -71,3 +71,10 @@ body {
     border-radius: 8px;
     border-left: 5px solid #007bff;
 }
+
+/* --- Estilos de agregarEquipo.jsp --- */
+.card-header-custom-warning {
+    background-color: #ffc107; /* Color warning */
+    border-radius: 10px 10px 0 0 !important;
+    color: #343a40; /* Texto oscuro */
+}

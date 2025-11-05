@@ -15,11 +15,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Servlet para manejar el registro de Equipo y Orden de Reparación
+ * Servlet para manejar el CRUD completo de Equipos
  * para un Cliente YA EXISTENTE en la base de datos.
  */
 @WebServlet("/EquipoController")
@@ -30,7 +29,6 @@ public class EquipoServlet extends HttpServlet {
 
   @Override
   public void init() throws ServletException {
-    // Inicialización de DAOs
     this.clienteDAO = new ClienteDAO();
     this.equipoDAO = new EquipoDAO();
     this.reparacionDAO = new ReparacionDAO();
@@ -40,21 +38,68 @@ public class EquipoServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String action = request.getParameter("action");
 
-    if ("mostrarAgregarEquipo".equals(action)) {
-      // Muestra el formulario para agregar equipo a cliente existente
-      mostrarFormularioAgregarEquipo(request, response);
-    } else if ("listarEquipos".equals(action)) {
-      // Acción para listar
-      response.sendRedirect(request.getContextPath() + "/ReparacionController?action=listar");
-    } else {
-      // Acción por defecto (redirigir al menú o a la lista)
-      response.sendRedirect(request.getContextPath() + "/vistas/tecnico/menuTecnico.jsp");
+    try {
+      if (action == null) {
+        response.sendRedirect(request.getContextPath() + "/vistas/tecnico/menuTecnico.jsp");
+        return;
+      }
+
+      switch(action) {
+        case "mostrarAgregarEquipo":
+          mostrarFormularioAgregarEquipo(request, response);
+          break;
+        case "listarPorCliente":
+          listarEquiposPorCliente(request, response);
+          break;
+        case "eliminarEquipo":
+          eliminarEquipo(request, response);
+          break;
+
+        // --- PASO 2: AÑADIMOS LA ACCIÓN PARA MOSTRAR EL FORMULARIO DE EDICIÓN ---
+        case "mostrarEditarEquipo":
+          mostrarFormularioEditarEquipo(request, response);
+          break;
+
+        default:
+          response.sendRedirect(request.getContextPath() + "/vistas/tecnico/menuTecnico.jsp");
+      }
+
+    } catch (Exception e) {
+      request.getSession().setAttribute("error", "Error en la operación de Equipo: " + e.getMessage());
+      response.sendRedirect(request.getContextPath() + "/ClienteController?action=listar");
     }
   }
 
+
+  // ... (listarEquiposPorCliente sin cambios) ...
+  private void listarEquiposPorCliente(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    int idCliente = Integer.parseInt(request.getParameter("idCliente"));
+    Cliente cliente = clienteDAO.getById(idCliente);
+    if (cliente == null) {
+      throw new Exception("El cliente con ID " + idCliente + " no existe.");
+    }
+    List<Equipo> listaEquipos = equipoDAO.getByClienteId(idCliente);
+    request.setAttribute("cliente", cliente);
+    request.setAttribute("listaEquipos", listaEquipos);
+    request.getRequestDispatcher("/vistas/tecnico/listaEquiposPorCliente.jsp").forward(request, response);
+  }
+
+  // ... (eliminarEquipo sin cambios) ...
+  private void eliminarEquipo(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    int idEquipo = Integer.parseInt(request.getParameter("idEquipo"));
+    int idCliente = Integer.parseInt(request.getParameter("idCliente"));
+    List<Reparacion> reparaciones = reparacionDAO.getByEquipoId(idEquipo);
+    for (Reparacion reparacion : reparaciones) {
+      reparacionDAO.delete(reparacion.getIdReparacion());
+    }
+    equipoDAO.delete(idEquipo);
+    request.getSession().setAttribute("success", "Equipo ID " + idEquipo + " y sus reparaciones asociadas fueron eliminados.");
+    response.sendRedirect(request.getContextPath() + "/EquipoController?action=listarPorCliente&idCliente=" + idCliente);
+  }
+
+  // ... (mostrarFormularioAgregarEquipo sin cambios) ...
   private void mostrarFormularioAgregarEquipo(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     try {
-      // Necesitamos pasar la lista de clientes al JSP para que el técnico pueda seleccionar uno
       List<Cliente> listaClientes = clienteDAO.getAll();
       request.setAttribute("listaClientes", listaClientes);
       request.getRequestDispatcher("/vistas/tecnico/agregarEquipo.jsp").forward(request, response);
@@ -64,48 +109,114 @@ public class EquipoServlet extends HttpServlet {
     }
   }
 
+  // --- NUEVO MÉTODO (Paso 2 del plan) ---
+  /**
+   * Carga un equipo por ID y lo muestra en el formulario de edición.
+   */
+  private void mostrarFormularioEditarEquipo(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    // 1. Obtener el ID del equipo a editar
+    int idEquipo = Integer.parseInt(request.getParameter("idEquipo"));
+
+    // 2. Buscar el equipo en la BD
+    Equipo equipo = equipoDAO.getById(idEquipo);
+    if (equipo == null) {
+      throw new Exception("Equipo con ID " + idEquipo + " no encontrado.");
+    }
+
+    // 3. (Importante) Cargar el objeto Cliente completo
+    // Tu equipoDAO.getById() solo trae un placeholder del cliente (con el ID).
+    // Necesitamos cargar el objeto Cliente completo para mostrar el nombre en el JSP.
+    Cliente cliente = clienteDAO.getById(equipo.getCliente().getIdCliente());
+    equipo.setCliente(cliente); // Reemplazamos el placeholder por el objeto completo
+
+    // 4. Enviar el equipo al JSP
+    request.setAttribute("equipo", equipo);
+
+    // 5. Forward al nuevo formulario que creamos
+    request.getRequestDispatcher("/vistas/tecnico/formularioEditarEquipo.jsp").forward(request, response);
+  }
+
+
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String action = request.getParameter("action");
 
     if ("guardarNuevoEquipo".equals(action)) {
       guardarNuevoEquipo(request, response);
-    } else {
-      // Si la acción no se especifica, redirigir al menú
+    }
+    // --- PASO 3: AÑADIMOS LA ACCIÓN PARA ACTUALIZAR EL EQUIPO ---
+    else if ("actualizarEquipo".equals(action)) {
+      actualizarEquipo(request, response);
+    }
+    else {
       response.sendRedirect(request.getContextPath() + "/vistas/tecnico/menuTecnico.jsp");
     }
   }
 
+  // --- NUEVO MÉTODO (Paso 3 del plan) ---
+  /**
+   * Procesa el formulario de edición y actualiza el equipo en la BD.
+   */
+  private void actualizarEquipo(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    String idClienteStr = request.getParameter("idCliente"); // Lo necesitamos para la redirección
+
+    try {
+      // 1. Obtener todos los parámetros del formulario
+      int idEquipo = Integer.parseInt(request.getParameter("idEquipo"));
+      int idCliente = Integer.parseInt(idClienteStr);
+
+      String tipoEquipo = request.getParameter("tipoEquipo");
+      String marca = request.getParameter("marca");
+      String modelo = request.getParameter("modelo");
+      String numSerie = request.getParameter("numSerie");
+      String problemaReportado = request.getParameter("problemaReportado");
+
+      // 2. Cargar el objeto Equipo existente desde la BD
+      // (No usamos el de la sesión para evitar datos desactualizados)
+      Equipo equipoAActualizar = equipoDAO.getById(idEquipo);
+      if (equipoAActualizar == null) {
+        throw new Exception("Error: El equipo que intenta actualizar ya no existe.");
+      }
+
+      // 3. Aplicar los nuevos valores
+      equipoAActualizar.setTipoEquipo(tipoEquipo);
+      equipoAActualizar.setMarca(marca);
+      equipoAActualizar.setModelo(modelo);
+      equipoAActualizar.setNumeroSerie(numSerie);
+      equipoAActualizar.setProblemaReportado(problemaReportado);
+
+      // 4. Guardar en la BD
+      equipoDAO.update(equipoAActualizar);
+
+      // 5. Redirigir a la lista de equipos de ESE cliente con mensaje de éxito
+      request.getSession().setAttribute("success", "Equipo ID " + idEquipo + " actualizado exitosamente.");
+      response.sendRedirect(request.getContextPath() + "/EquipoController?action=listarPorCliente&idCliente=" + idCliente);
+
+    } catch (Exception e) {
+      // En caso de error, volver a la lista de clientes (o al formulario)
+      request.getSession().setAttribute("error", "Error al actualizar el equipo: " + e.getMessage());
+      response.sendRedirect(request.getContextPath() + "/EquipoController?action=listarPorCliente&idCliente=" + idClienteStr);
+    }
+  }
+
+
+  // ... (guardarNuevoEquipo sin cambios) ...
   private void guardarNuevoEquipo(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
 
-    // 1. OBTENER EL OBJETO USUARIO COMPLETO DE LA SESIÓN
     Usuarios tecnicoLogueado = (Usuarios) request.getSession().getAttribute("usuarioLogueado");
     Integer idUsuarioSesion = null;
 
-    // Verificar si el objeto existe y extraer el ID
     if (tecnicoLogueado != null) {
       idUsuarioSesion = tecnicoLogueado.getIdUsuario();
     }
 
-    // 2. VERIFICACIÓN DE SESIÓN
     if (idUsuarioSesion == null || idUsuarioSesion <= 0) {
       request.setAttribute("error", "Debe iniciar sesión como técnico para registrar un equipo.");
-
-      // Si falla, debemos recargar los datos del formulario (lista de clientes)
-      try {
-        List<Cliente> listaClientes = clienteDAO.getAll();
-        request.setAttribute("listaClientes", listaClientes);
-      } catch (Exception daoE) {
-        // Manejar error de carga de clientes si es crítico
-        request.setAttribute("error", "Error crítico: No se pudo cargar la lista de clientes. " + daoE.getMessage());
-      }
-
-      request.getRequestDispatcher("/vistas/tecnico/agregarEquipo.jsp").forward(request, response);
+      mostrarFormularioAgregarEquipo(request, response);
       return;
     }
 
-    // 3. Obtener parámetros y realizar validaciones
     String idClienteStr = request.getParameter("idCliente");
     String tipoEquipo = request.getParameter("tipoEquipo");
     String marca = request.getParameter("marca");
@@ -113,28 +224,19 @@ public class EquipoServlet extends HttpServlet {
     String numSerie = request.getParameter("numSerie");
     String problemaReportado = request.getParameter("problemaReportado");
 
-    if (idClienteStr == null || problemaReportado == null || problemaReportado.trim().isEmpty()) {
-      request.setAttribute("error", "Datos incompletos: Asegúrese de seleccionar el cliente y describir la falla.");
-      // Recargar datos y hacer forward en caso de error de validación
+    if (idClienteStr == null || idClienteStr.trim().isEmpty()) {
+      request.setAttribute("error", "Datos incompletos: Debe seleccionar un cliente.");
       mostrarFormularioAgregarEquipo(request, response);
       return;
     }
 
     try {
       int idCliente = Integer.parseInt(idClienteStr);
-
-      // 4. Obtener Cliente (Necesario para la FK de Equipo) y Técnico (Necesario para Reparacion)
       Cliente cliente = clienteDAO.getById(idCliente);
-
       if (cliente == null) {
         throw new Exception("Cliente no encontrado en la base de datos.");
       }
 
-      // Crear objeto técnico logueado (solo se necesita el ID)
-      Usuarios tecnico = new Usuarios();
-      tecnico.setIdUsuario(idUsuarioSesion);
-
-      // 5. Registrar el Equipo
       Equipo nuevoEquipo = new Equipo();
       nuevoEquipo.setCliente(cliente);
       nuevoEquipo.setTipoEquipo(tipoEquipo);
@@ -144,40 +246,15 @@ public class EquipoServlet extends HttpServlet {
       nuevoEquipo.setProblemaReportado(problemaReportado);
 
       equipoDAO.insert(nuevoEquipo);
-      Integer idEquipo = nuevoEquipo.getIdEquipo();
 
-      if (idEquipo == 0) {
-        throw new Exception("Fallo al obtener el ID del Equipo.");
-      }
-
-      // 6. Registrar la Orden de Reparación
-      Reparacion orden = new Reparacion();
-
-      Equipo equipoPlaceholder = new Equipo();
-      equipoPlaceholder.setIdEquipo(idEquipo); // Usamos el ID generado
-
-      orden.setEquipo(equipoPlaceholder);
-      orden.setUsuario(tecnico); // El técnico que registró la orden
-
-      orden.setDiagnosticoFinal(problemaReportado);
-      orden.setEstado("RECIBIDO");
-
-      // Costos iniciales a cero
-      orden.setCostoRepuestos(BigDecimal.ZERO);
-      orden.setCostoManoObra(BigDecimal.ZERO);
-      orden.setPresupuestoTotal(BigDecimal.ZERO);
-
-      reparacionDAO.insert(orden);
-
-      // 7. Éxito y Redirección
-      request.getSession().setAttribute("success", "Equipo y Orden N° " + orden.getIdReparacion() + " creados con éxito.");
-      response.sendRedirect(request.getContextPath() + "/ReparacionController?action=listar");
+      request.getSession().setAttribute("success", "Equipo '" + tipoEquipo + "' registrado exitosamente para el cliente: " + cliente.getNombre());
+      response.sendRedirect(request.getContextPath() + "/vistas/tecnico/menuTecnico.jsp");
 
     } catch (NumberFormatException e) {
       request.setAttribute("error", "Error de formato de ID. " + e.getMessage());
       mostrarFormularioAgregarEquipo(request, response);
     } catch (Exception e) {
-      request.setAttribute("error", "Error al completar la orden: " + e.getMessage());
+      request.setAttribute("error", "Error al guardar el equipo: " + e.getMessage());
       mostrarFormularioAgregarEquipo(request, response);
     }
   }

@@ -58,11 +58,24 @@
                     <td>${cliente.telefono}</td>
                     <td>${cliente.email}</td>
                     <td class="text-center">
+
+                        <%-- === INICIO DEL CAMBIO === --%>
+
+                        <a href="${pageContext.request.contextPath}/EquipoController?action=listarPorCliente&idCliente=${cliente.idCliente}"
+                           class="btn btn-primary btn-sm me-2"
+                           aria-label="Ver equipos del cliente ${cliente.nombre} ${cliente.apellido}">
+                            <i class="bi bi-laptop" aria-hidden="true"></i> Ver Equipos
+                        </a>
+
+                        <%-- === FIN DEL CAMBIO === --%>
+
+
                         <a href="${pageContext.request.contextPath}/ClienteController?action=editar&idCliente=${cliente.idCliente}"
                            class="btn btn-info btn-sm text-white me-2"
                            aria-label="Editar datos del cliente ${cliente.nombre} ${cliente.apellido}">
                             <i class="bi bi-pencil-fill" aria-hidden="true"></i> Editar
                         </a>
+
                         <a href="${pageContext.request.contextPath}/ClienteController?action=eliminar&idCliente=${cliente.idCliente}"
                            class="btn btn-danger btn-sm"
                            onclick="return confirm('ATENCIÓN: ¿Estás seguro de ELIMINAR al cliente ${cliente.nombre} y TODOS sus equipos y órdenes asociadas? Esta acción es irreversible.');"
