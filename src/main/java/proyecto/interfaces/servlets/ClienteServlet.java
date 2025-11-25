@@ -197,7 +197,18 @@ public class ClienteServlet extends HttpServlet {
 
 
   private void listarClientes(HttpServletRequest request, HttpServletResponse response) throws Exception {
-    List<Cliente> listaClientes = clienteDAO.getAll();
+
+    // 1. Verificar búsqueda
+    String busqueda = request.getParameter("busquedaApellido");
+    List<Cliente> listaClientes;
+
+    if (busqueda != null && !busqueda.trim().isEmpty()) {
+      listaClientes = clienteDAO.getByApellido(busqueda);
+      request.setAttribute("busquedaActual", busqueda);
+    } else {
+      listaClientes = clienteDAO.getAll();
+    }
+
     request.setAttribute("listaClientes", listaClientes);
     request.getRequestDispatcher("/vistas/tecnico/listaClientes.jsp").forward(request, response);
   }

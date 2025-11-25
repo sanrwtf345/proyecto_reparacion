@@ -29,6 +29,41 @@
     </c:if>
 </div>
 
+<%-- BARRA DE BÚSQUEDA Y FILTRO --%>
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <form class="row g-3 align-items-center" action="<%= request.getContextPath() %>/UsuariosController" method="GET">
+            <input type="hidden" name="action" value="listar">
+
+            <div class="col-auto">
+                <label for="busquedaApellido" class="col-form-label fw-bold">Buscar por Apellido:</label>
+            </div>
+            <div class="col-auto">
+                <input type="text" id="busquedaApellido" name="busquedaApellido" class="form-control"
+                       placeholder="Ej: Gonzalez" value="${requestScope.busquedaActual}">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+                <%-- Botón para limpiar el filtro --%>
+                <c:if test="${not empty requestScope.busquedaActual}">
+                    <a href="<%= request.getContextPath() %>/UsuariosController?action=listar" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Limpiar
+                    </a>
+                </c:if>
+            </div>
+
+            <%-- Botón de Registrar a la derecha --%>
+            <div class="col text-end">
+                 <a href="<%= request.getContextPath() %>/UsuariosController?action=formularioRegisUsuario" class="btn btn-success">
+                    <i class="bi bi-person-plus-fill"></i> Nuevo Usuario
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
 <%-- Tabla de listado de usuarios --%>
 <table class="table table-striped table-bordered" aria-labelledby="listado-title">
     <thead class="table-dark">

@@ -34,29 +34,63 @@
     <c:remove var="success" scope="session"/>
 </c:if>
 
-<div class="mb-3 d-flex justify-content-between align-items-center">
-     <a href="${pageContext.request.contextPath}/ClienteController?action=crear" class="btn btn-success shadow-sm"
-        role="button" aria-label="Registrar un nuevo cliente en el sistema">
-        <i class="bi bi-person-plus-fill me-1" aria-hidden="true"></i> Registrar Nuevo Cliente
-    </a>
+<%-- BARRA DE HERRAMIENTAS: Búsqueda + Botones --%>
+<div class="card mb-4 shadow-sm bg-light">
+    <div class="card-body py-3">
+        <form class="row g-3 align-items-center" action="${pageContext.request.contextPath}/ClienteController" method="GET">
+            <input type="hidden" name="action" value="listar">
 
-    <%-- BOTÓN VOLVER DINÁMICO  --%>
-    <c:choose>
-        <c:when test="${sessionScope.usuarioLogueado.rol eq 'ADMIN'}">
-            <a href="${pageContext.request.contextPath}/vistas/admin/menuAdmin.jsp" class="btn btn-secondary"
-               role="button" aria-label="Volver al panel de administrador">
-                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Volver al Panel Admin
-            </a>
-        </c:when>
-        <c:otherwise>
-            <a href="${pageContext.request.contextPath}/vistas/tecnico/menuTecnico.jsp" class="btn btn-secondary"
-               role="button" aria-label="Volver al menú principal del técnico">
-                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Volver al Menú
-            </a>
-        </c:otherwise>
-    </c:choose>
-    <%-- === FIN DEL CAMBIO === --%>
+            <%-- Input de Búsqueda --%>
+            <div class="col-auto">
+                <label for="busquedaApellido" class="visually-hidden">Buscar por Apellido</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="busquedaApellido" name="busquedaApellido" class="form-control"
+                           placeholder="Buscar apellido..." value="${requestScope.busquedaActual}">
+                </div>
+            </div>
 
+            <%-- Botón Buscar --%>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </div>
+
+            <%-- Botón Limpiar (Condicional) --%>
+            <c:if test="${not empty requestScope.busquedaActual}">
+                <div class="col-auto">
+                    <a href="${pageContext.request.contextPath}/ClienteController?action=listar" class="btn btn-outline-secondary" aria-label="Limpiar filtro">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+            </c:if>
+
+            <%-- Espaciador para empujar botones a la derecha --%>
+            <div class="col"></div>
+
+            <%-- Botones de Acción (Registrar y Volver) --%>
+            <div class="col-auto">
+                 <a href="${pageContext.request.contextPath}/ClienteController?action=crear" class="btn btn-success shadow-sm">
+                    <i class="bi bi-person-plus-fill me-1"></i> Nuevo Cliente
+                </a>
+            </div>
+
+            <div class="col-auto">
+                <%-- BOTÓN VOLVER DINÁMICO --%>
+                <c:choose>
+                    <c:when test="${sessionScope.usuarioLogueado.rol eq 'ADMIN'}">
+                        <a href="${pageContext.request.contextPath}/vistas/admin/menuAdmin.jsp" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Volver
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="${pageContext.request.contextPath}/vistas/tecnico/menuTecnico.jsp" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Volver
+                        </a>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="table-responsive bg-white p-3 rounded shadow-sm" role="region" aria-labelledby="client-list-caption">

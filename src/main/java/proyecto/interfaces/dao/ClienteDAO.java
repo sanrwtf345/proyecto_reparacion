@@ -28,7 +28,8 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
   private static final String SQL_GETBYID =
       "SELECT id_cliente, nombre, apellido, telefono, email, id_usuario FROM clientes WHERE id_cliente = ?";
 
-  // No es necesario modificar existsById, ya que es eficiente.
+  private static final String SQL_GET_BY_APELLIDO =
+      "SELECT * FROM clientes WHERE apellido LIKE ? ORDER BY apellido, nombre";
 
 
   @Override
@@ -219,6 +220,36 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
     }
 
     return cliente;
+  }
+
+  public List<Cliente> getByApellido(String apellido) {
+    Connection conn = obtenerConexion();
+    PreparedStatement pst = null;
+    ResultSet rs = null;
+    List<Cliente> listaClientes = new ArrayList<>();
+
+    try {
+      pst = conn.prepareStatement(SQL_GET_BY_APELLIDO);
+      pst.setString(1, "%" + apellido + "%");
+      rs = pst.executeQuery();
+
+      while (rs.next()) {
+        Cliente cliente = new Cliente();
+        cliente.setIdCliente(rs.getInt("id_cliente"));
+        cliente.setNombre(rs.getString("nombre"));
+        cliente.setApellido(rs.getString("apellido"));
+        cliente.setTelefono(rs.getString("telefono"));
+        cliente.setEmail(rs.getString("email"));
+        // (Opcional: mapear usuario si lo necesitas)
+
+        listaClientes.add(cliente);
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Error al buscar clientes por apellido", e);
+    } finally {
+      try { if (rs != null) rs.close(); if (pst != null) pst.close(); if (conn != null) conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+    }
+    return listaClientes;
   }
 
   @Override

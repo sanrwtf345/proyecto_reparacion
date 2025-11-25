@@ -37,6 +37,9 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
       "SELECT id_usuario, correo_electronico, password, nombre, apellido, rol " +
           "FROM usuarios WHERE correo_electronico = ?";
 
+  private static final String SQL_GET_BY_APELLIDO =
+      "SELECT * FROM usuarios WHERE apellido LIKE ? ORDER BY apellido, nombre";
+
   @Override
   public List<Usuarios> getAll() {
     conn = obtenerConexion();
@@ -207,6 +210,40 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
       }
     }
     return usuario;
+  }
+
+  public List<Usuarios> getByApellido(String apellido) {
+    conn = obtenerConexion();
+    PreparedStatement pst = null;
+    ResultSet rs = null;
+    List<Usuarios> listaUsuarios = new ArrayList<>();
+
+    try {
+      pst = conn.prepareStatement(SQL_GET_BY_APELLIDO);
+      // Los % permiten buscar coincidencias parciales (ej: "Per" encuentra "Perez")
+      pst.setString(1, "%" + apellido + "%");
+      rs = pst.executeQuery();
+
+      while (rs.next()) {
+        Usuarios usuario = new Usuarios();
+        usuario.setIdUsuario(rs.getInt("id_usuario"));
+        usuario.setCorreoElectronico(rs.getString("correo_electronico"));
+        usuario.setPassword(rs.getString("password"));
+        usuario.setNombre(rs.getString("nombre"));
+        usuario.setApellido(rs.getString("apellido"));
+        usuario.setRol(RolUsuario.valueOf(rs.getString("rol")));
+
+        listaUsuarios.add(usuario);
+      }
+
+    } catch (SQLException e) {
+      throw new RuntimeException("Error al buscar usuarios por apellido", e);
+    } finally {
+      // (Aquí va tu bloque try-catch para cerrar recursos, igual que en getAll)
+      try { if (rs != null) rs.close(); if (pst != null) pst.close(); if (conn != null) conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    return listaUsuarios;
   }
 
   @Override

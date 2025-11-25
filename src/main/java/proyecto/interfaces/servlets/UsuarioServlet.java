@@ -194,10 +194,21 @@ public class UsuarioServlet extends HttpServlet {
 
 
   private void listarUsuarios(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    List<Usuarios> listaUsuarios = usuarioDAO.getAll();
-    request.setAttribute("listaUsuarios", listaUsuarios);
 
-    // forward a la vista ListadoUsuarios.jsp
+    // 1. Verificar si hay un término de búsqueda
+    String busqueda = request.getParameter("busquedaApellido");
+    List<Usuarios> listaUsuarios;
+
+    if (busqueda != null && !busqueda.trim().isEmpty()) {
+      // Si hay búsqueda, usamos el método del DAO
+      listaUsuarios = usuarioDAO.getByApellido(busqueda);
+      request.setAttribute("busquedaActual", busqueda); // Para mantener el texto en el input
+    } else {
+      // Si no, traemos todos como siempre
+      listaUsuarios = usuarioDAO.getAll();
+    }
+
+    request.setAttribute("listaUsuarios", listaUsuarios);
     request.getRequestDispatcher("/vistas/admin/listadoUsuarios.jsp").forward(request, response);
   }
 
