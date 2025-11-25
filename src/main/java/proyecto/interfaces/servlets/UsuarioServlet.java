@@ -24,7 +24,7 @@ public class UsuarioServlet extends HttpServlet {
     this.usuarioDAO = new UsuariosDAO();
   }
 
-  // ... (El método doGet no cambia) ...
+
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String action = request.getParameter("action");
@@ -42,7 +42,6 @@ public class UsuarioServlet extends HttpServlet {
           mostrarFormulario(request, response, 0);
           break;
         case "editar":
-          // CORRECCIÓN 1: Nueva acción para mostrar formulario de edición
           int idUsuarioEditar = Integer.parseInt(request.getParameter("idUsuario"));
           mostrarFormulario(request, response, idUsuarioEditar);
           break;
@@ -72,7 +71,7 @@ public class UsuarioServlet extends HttpServlet {
     }
   }
 
-  // ... (El método mostrarFormulario no cambia) ...
+
   private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response, int idUsuario) throws Exception {
     Usuarios usuario;
     if (idUsuario == 0) {
@@ -118,7 +117,6 @@ public class UsuarioServlet extends HttpServlet {
       nuevoUsuario.setRol(RolUsuario.valueOf(rolStr));
 
       // --- PASO 2: HASHEAR LA CONTRASEÑA ---
-      // (Implementación de la página 15 del PDF )
       String passwordHasheada = PasswordUtil.hashPassword(password);
       nuevoUsuario.setPassword(passwordHasheada); // Guardamos el HASH, no el texto plano
       // -------------------------------------
@@ -194,7 +192,7 @@ public class UsuarioServlet extends HttpServlet {
   }
 
 
-  // ... (El método listarUsuarios no cambia) ...
+
   private void listarUsuarios(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     List<Usuarios> listaUsuarios = usuarioDAO.getAll();
     request.setAttribute("listaUsuarios", listaUsuarios);
@@ -203,7 +201,7 @@ public class UsuarioServlet extends HttpServlet {
     request.getRequestDispatcher("/vistas/admin/listadoUsuarios.jsp").forward(request, response);
   }
 
-  // ... (El método eliminarUsuario no cambia) ...
+
   private void eliminarUsuario(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
     try {
       int idUsuario = Integer.parseInt(request.getParameter("idUsuario"));

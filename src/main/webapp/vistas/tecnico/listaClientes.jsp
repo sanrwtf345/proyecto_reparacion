@@ -2,10 +2,17 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page isELIgnored="false" %>
 
-<%-- 1. Incluimos el HEADER de Técnico --%>
-<jsp:include page="/vistas/tecnico/comun/headerTecnico.jsp">
-    <jsp:param name="tituloPagina" value="Gestión de Clientes"/>
-</jsp:include>
+<%-- HEADER DINÁMICO: Elige el header según el rol del usuario --%>
+<c:choose>
+    <c:when test="${sessionScope.usuarioLogueado.rol eq 'ADMIN'}">
+        <%-- Si es ADMIN, usamos el header rojo --%>
+        <jsp:include page="/vistas/admin/comun/headerAdmin.jsp"><jsp:param name="tituloPagina" value="Gestión (Modo Admin)"/></jsp:include>
+    </c:when>
+    <c:otherwise>
+        <%-- Si es TÉCNICO (u otro), usamos el header oscuro --%>
+        <jsp:include page="/vistas/tecnico/comun/headerTecnico.jsp"><jsp:param name="tituloPagina" value="Gestión Operativa"/></jsp:include>
+    </c:otherwise>
+</c:choose>
 
 
 <%-- INICIO DEL CONTENIDO DE LA PÁGINA --%>
@@ -32,10 +39,24 @@
         role="button" aria-label="Registrar un nuevo cliente en el sistema">
         <i class="bi bi-person-plus-fill me-1" aria-hidden="true"></i> Registrar Nuevo Cliente
     </a>
-    <a href="${pageContext.request.contextPath}/vistas/tecnico/menuTecnico.jsp" class="btn btn-secondary"
-       role="button" aria-label="Volver al menú principal del técnico">
-        <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Volver al Menú
-    </a>
+
+    <%-- BOTÓN VOLVER DINÁMICO  --%>
+    <c:choose>
+        <c:when test="${sessionScope.usuarioLogueado.rol eq 'ADMIN'}">
+            <a href="${pageContext.request.contextPath}/vistas/admin/menuAdmin.jsp" class="btn btn-secondary"
+               role="button" aria-label="Volver al panel de administrador">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Volver al Panel Admin
+            </a>
+        </c:when>
+        <c:otherwise>
+            <a href="${pageContext.request.contextPath}/vistas/tecnico/menuTecnico.jsp" class="btn btn-secondary"
+               role="button" aria-label="Volver al menú principal del técnico">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Volver al Menú
+            </a>
+        </c:otherwise>
+    </c:choose>
+    <%-- === FIN DEL CAMBIO === --%>
+
 </div>
 
 <div class="table-responsive bg-white p-3 rounded shadow-sm" role="region" aria-labelledby="client-list-caption">
@@ -59,16 +80,11 @@
                     <td>${cliente.email}</td>
                     <td class="text-center">
 
-                        <%-- === INICIO DEL CAMBIO === --%>
-
                         <a href="${pageContext.request.contextPath}/EquipoController?action=listarPorCliente&idCliente=${cliente.idCliente}"
                            class="btn btn-primary btn-sm me-2"
                            aria-label="Ver equipos del cliente ${cliente.nombre} ${cliente.apellido}">
                             <i class="bi bi-laptop" aria-hidden="true"></i> Ver Equipos
                         </a>
-
-                        <%-- === FIN DEL CAMBIO === --%>
-
 
                         <a href="${pageContext.request.contextPath}/ClienteController?action=editar&idCliente=${cliente.idCliente}"
                            class="btn btn-info btn-sm text-white me-2"

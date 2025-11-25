@@ -2,13 +2,17 @@
 <%@ page isELIgnored="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<%--
-  1. Incluimos el HEADER de Técnico (el de Bootstrap).
-  Pasamos el título dinámico al header.
---%>
-<jsp:include page="/vistas/tecnico/comun/headerTecnico.jsp">
-    <jsp:param name="tituloPagina" value="${cliente.idCliente == 0 ? 'Registrar Nuevo Cliente' : 'Editar Cliente'}" />
-</jsp:include>
+<%-- HEADER DINÁMICO: Elige el header según el rol del usuario --%>
+<c:choose>
+    <c:when test="${sessionScope.usuarioLogueado.rol eq 'ADMIN'}">
+        <%-- Si es ADMIN, usamos el header rojo --%>
+        <jsp:include page="/vistas/admin/comun/headerAdmin.jsp"><jsp:param name="tituloPagina" value="Gestión (Modo Admin)"/></jsp:include>
+    </c:when>
+    <c:otherwise>
+        <%-- Si es TÉCNICO (u otro), usamos el header oscuro --%>
+        <jsp:include page="/vistas/tecnico/comun/headerTecnico.jsp"><jsp:param name="tituloPagina" value="Gestión Operativa"/></jsp:include>
+    </c:otherwise>
+</c:choose>
 
 
 <%--

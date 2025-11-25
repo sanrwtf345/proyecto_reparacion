@@ -21,3 +21,34 @@ body {
 .main-content {
     flex: 1;
 }
+
+/* Esto permite que el Admin vea bien los formularios de Clientes/Equipos */
+
+.card-shadow { box-shadow: 0 0 30px rgba(0, 0, 0, 0.1); }
+
+.card-header-custom {
+    background-color: #198754; /* Verde */
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.card-header-custom-warning {
+    background-color: #ffc107; /* Amarillo */
+    border-radius: 10px 10px 0 0 !important;
+    color: #343a40;
+}
+
+.cliente-info {
+    background-color: #e7f1ff;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 5px solid #007bff;
+}
+
+/* Estilos de tablas */
+.table th, .table td { vertical-align: middle; }
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border-width: 0;
+}

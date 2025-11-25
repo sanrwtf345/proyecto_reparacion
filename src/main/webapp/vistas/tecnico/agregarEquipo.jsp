@@ -2,16 +2,25 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page isELIgnored="false" %>
 
-<%-- 1. Incluimos el HEADER de Técnico --%>
-<jsp:include page="/vistas/tecnico/comun/headerTecnico.jsp"><jsp:param name="tituloPagina" value="Registrar Nuevo Equipo"/></jsp:include>
+<%-- HEADER DINÁMICO: Elige el header según el rol del usuario --%>
+<c:choose>
+    <c:when test="${sessionScope.usuarioLogueado.rol eq 'ADMIN'}">
+        <%-- Si es ADMIN --%>
+        <jsp:include page="/vistas/admin/comun/headerAdmin.jsp"><jsp:param name="tituloPagina" value="Registrar Equipo"/></jsp:include>
+    </c:when>
+    <c:otherwise>
+        <%-- Si es TÉCNICO --%>
+        <jsp:include page="/vistas/tecnico/comun/headerTecnico.jsp"><jsp:param name="tituloPagina" value="Registrar Equipo"/></jsp:include>
+    </c:otherwise>
+</c:choose>
 
 
-<%-- INICIO DEL CONTENIDO DE LA PÁGINA --%>
-<%-- (Ya no necesitamos <div class="container mt-5" role="main">) --%>
+<%-- INICIO DEL CONTENIDO --%>
+<%-- (El div container principal ya está abierto en el header) --%>
 
 <div class="card card-shadow mx-auto" style="max-width: 800px; border-radius: 10px;">
 
-    <%-- CAMBIO 1: Título actualizado (color warning) --%>
+    <%-- CAMBIO: Usamos 'card-header-custom-warning' para mantener el color amarillo --%>
     <div class="card-header card-header-custom-warning text-center">
         <h3 class="mb-0 fw-bold" id="form-title">
             <i class="bi bi-person-check-fill me-2" aria-hidden="true"></i>Registrar Equipo para Cliente Existente
@@ -20,7 +29,7 @@
 
     <div class="card-body p-4">
 
-        <%-- Mensaje de Error (si el Servlet regresa debido a fallos de validación) --%>
+        <%-- Mensaje de Error --%>
         <c:if test="${not empty requestScope.error}">
             <div class="alert alert-danger alert-dismissible fade show" role="alert" aria-live="assertive">
                 <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>${requestScope.error}
@@ -29,7 +38,7 @@
             <c:remove var="error" scope="request"/>
         </c:if>
 
-        <%-- Formulario POST: Envia datos al EquipoController --%>
+        <%-- Formulario POST --%>
         <form action="<%= request.getContextPath() %>/EquipoController" method="POST" aria-labelledby="form-title">
 
             <input type="hidden" name="action" value="guardarNuevoEquipo">
@@ -81,30 +90,35 @@
             </div>
 
             <h5 class="mt-4 mb-3 text-secondary border-bottom pb-2"><i class="bi bi-exclamation-octagon-fill me-2" aria-hidden="true"></i>Falla Reportada</h5>
-
-            <%-- CAMBIO 2: La falla reportada AHORA ES OPCIONAL --%>
             <div class="mb-3">
-                <label for="problemaReportado" class="form-label fw-bold">Descripción de la Falla (Opcional)</label>
-                <%-- CAMBIO 3: Se quitó 'required' --%>
-                <textarea class="form-control" id="problemaReportado" name="problemaReportado" rows="4" aria-describedby="problemaReportadoHelp">${param.problemaReportado}</textarea>
-                <%-- CAMBIO 4: Texto de ayuda actualizado --%>
-                <div id="problemaReportadoHelp" class="form-text">Detalle la falla reportada. (Opcional, se puede agregar al crear la orden).</div>
+                <label for="problemaReportado" class="form-label fw-bold">Descripción de la Falla <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="problemaReportado" name="problemaReportado" rows="4" required aria-required="true" aria-describedby="problemaReportadoHelp">${param.problemaReportado}</textarea>
+                <div id="problemaReportadoHelp" class="form-text">Detalle la falla reportada. Esta descripción se usará para la orden inicial.</div>
             </div>
 
             <div class="d-grid gap-2 mt-5">
-                <%-- CAMBIO 5: Texto del botón actualizado --%>
-                <button type="submit" class="btn btn-warning btn-lg text-dark fw-bold" role="button" aria-label="Registrar el nuevo equipo">
+                <button type="submit" class="btn btn-warning btn-lg text-dark fw-bold" role="button" aria-label="Registrar el nuevo equipo y abrir la orden de reparación">
                     <i class="bi bi-save-fill me-2" aria-hidden="true"></i>Registrar Equipo
                 </button>
-                <a href="<%= request.getContextPath() %>/vistas/tecnico/menuTecnico.jsp" class="btn btn-outline-secondary" role="button" aria-label="Cancelar el registro de equipo y volver al menú principal">
-                    <i class="bi bi-x-circle me-2" aria-hidden="true"></i>Cancelar y Volver al Menú
-                </a>
+
+                <%-- BOTÓN CANCELAR DINÁMICO --%>
+                <c:choose>
+                    <c:when test="${sessionScope.usuarioLogueado.rol eq 'ADMIN'}">
+                        <a href="<%= request.getContextPath() %>/vistas/admin/menuAdmin.jsp" class="btn btn-outline-secondary" role="button" aria-label="Cancelar y volver">
+                            <i class="bi bi-x-circle me-2" aria-hidden="true"></i>Cancelar y Volver al Menú
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="<%= request.getContextPath() %>/vistas/tecnico/menuTecnico.jsp" class="btn btn-outline-secondary" role="button" aria-label="Cancelar y volver">
+                            <i class="bi bi-x-circle me-2" aria-hidden="true"></i>Cancelar y Volver al Menú
+                        </a>
+                    </c:otherwise>
+                </c:choose>
+
             </div>
         </form>
     </div>
 </div>
-<%-- FIN DEL CONTENIDO DE LA PÁGINA --%>
 
-
-<%-- 2. Incluimos el FOOTER de Técnico --%>
+<%-- 2. Incluimos el FOOTER --%>
 <jsp:include page="/vistas/tecnico/comun/footerTecnico.jsp" />

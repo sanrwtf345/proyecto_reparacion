@@ -2,10 +2,15 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page isELIgnored="false" %>
 
-<%-- 1. Incluimos el HEADER de Técnico --%>
-<jsp:include page="/vistas/tecnico/comun/headerTecnico.jsp">
-    <jsp:param name="tituloPagina" value="Listado de Órdenes"/>
-</jsp:include>
+<%-- HEADER DINÁMICO: Elige el header según el rol del usuario --%>
+<c:choose>
+    <c:when test="${sessionScope.usuarioLogueado.rol eq 'ADMIN'}">
+        <jsp:include page="/vistas/admin/comun/headerAdmin.jsp"><jsp:param name="tituloPagina" value="Listado de Órdenes (Admin)"/></jsp:include>
+    </c:when>
+    <c:otherwise>
+        <jsp:include page="/vistas/tecnico/comun/headerTecnico.jsp"><jsp:param name="tituloPagina" value="Listado de Órdenes"/></jsp:include>
+    </c:otherwise>
+</c:choose>
 
 
 <%-- INICIO DEL CONTENIDO DE LA PÁGINA --%>
@@ -31,12 +36,26 @@
     </c:if>
 </div>
 
-<a href="${pageContext.request.contextPath}/vistas/tecnico/menuTecnico.jsp"
-   class="btn btn-secondary back-button mb-3"
-   role="button"
-   aria-label="Volver al Menú Principal del Técnico">
-    <i class="bi bi-arrow-left-circle me-2"></i>Volver al Menú
-</a>
+<%-- === BOTÓN VOLVER DINÁMICO === --%>
+<c:choose>
+    <c:when test="${sessionScope.usuarioLogueado.rol eq 'ADMIN'}">
+        <a href="${pageContext.request.contextPath}/vistas/admin/menuAdmin.jsp"
+           class="btn btn-secondary back-button mb-3"
+           role="button"
+           aria-label="Volver al Panel de Administrador">
+            <i class="bi bi-arrow-left-circle me-2"></i>Volver al Panel Admin
+        </a>
+    </c:when>
+    <c:otherwise>
+        <a href="${pageContext.request.contextPath}/vistas/tecnico/menuTecnico.jsp"
+           class="btn btn-secondary back-button mb-3"
+           role="button"
+           aria-label="Volver al Menú Principal del Técnico">
+            <i class="bi bi-arrow-left-circle me-2"></i>Volver al Menú
+        </a>
+    </c:otherwise>
+</c:choose>
+<%-- ============================= --%>
 
 <div class="table-responsive-custom">
     <table class="table table-striped table-hover align-middle shadow-sm"
@@ -111,5 +130,5 @@
 <%-- FIN DEL CONTENIDO DE LA PÁGINA --%>
 
 
-<%-- 2. Incluimos el FOOTER de Técnico --%>
+<%-- 2. Incluimos el FOOTER de Técnico (Es compatible con Admin también, el CSS hace la magia) --%>
 <jsp:include page="/vistas/tecnico/comun/footerTecnico.jsp" />
