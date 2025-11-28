@@ -1,6 +1,6 @@
 package proyecto.interfaces.filters;
 
-import proyecto.interfaces.entities.Usuarios;
+import proyecto.interfaces.entities.Usuario;
 import proyecto.interfaces.enums.RolUsuario;
 
 import jakarta.servlet.Filter;
@@ -78,7 +78,7 @@ public class AuthFilter implements Filter {
 
     // 2. Comprobar si la ruta es pública
     boolean esPublica = RUTAS_PUBLICAS.stream().anyMatch(path::equals);
-    Usuarios usuarioLogueado = (session != null) ? (Usuarios) session.getAttribute("usuarioLogueado") : null;
+    Usuario usuarioLogueado = (session != null) ? (Usuario) session.getAttribute("usuarioLogueado") : null;
 
 
     // =========================================================

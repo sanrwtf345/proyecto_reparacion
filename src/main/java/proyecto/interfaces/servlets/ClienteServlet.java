@@ -6,7 +6,7 @@ import proyecto.interfaces.dao.ReparacionDAO;
 import proyecto.interfaces.entities.Cliente;
 import proyecto.interfaces.entities.Equipo;
 import proyecto.interfaces.entities.Reparacion;
-import proyecto.interfaces.entities.Usuarios;
+import proyecto.interfaces.entities.Usuario;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -113,7 +113,7 @@ public class ClienteServlet extends HttpServlet {
       String email = request.getParameter("email");
 
       // Obtener el Usuario logueado de la sesión y verificar
-      Usuarios usuarioLogueado = (Usuarios) request.getSession().getAttribute("usuarioLogueado");
+      Usuario usuarioLogueado = (Usuario) request.getSession().getAttribute("usuarioLogueado");
 
       if (usuarioLogueado == null) {
         throw new Exception("Error al obtener ID de usuario para insertar cliente. No hay un usuario logueado en la sesión.");

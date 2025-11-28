@@ -3,13 +3,13 @@ package proyecto.interfaces.dao;
 import proyecto.interfaces.AdminConexion;
 import proyecto.interfaces.DAO;
 import proyecto.interfaces.enums.RolUsuario;
-import proyecto.interfaces.entities.Usuarios;
+import proyecto.interfaces.entities.Usuario;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
+public class UsuarioDAO implements DAO<Usuario, Integer>, AdminConexion {
 
   private Connection conn = null;
 
@@ -41,18 +41,18 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
       "SELECT * FROM usuarios WHERE apellido LIKE ? ORDER BY apellido, nombre";
 
   @Override
-  public List<Usuarios> getAll() {
+  public List<Usuario> getAll() {
     conn = obtenerConexion();
     PreparedStatement pst = null;
     ResultSet rs = null;
-    List<Usuarios> listaUsuarios = new ArrayList<>();
+    List<Usuario> listaUsuarios = new ArrayList<>();
 
     try {
       pst = conn.prepareStatement(SQL_GETALL);
       rs = pst.executeQuery();
 
       while (rs.next()) {
-        Usuarios usuario = new Usuarios();
+        Usuario usuario = new Usuario();
         usuario.setIdUsuario(rs.getInt("id_usuario"));
         usuario.setCorreoElectronico(rs.getString("correo_electronico")); // <--- CAMBIO
         usuario.setPassword(rs.getString("password"));
@@ -76,7 +76,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
   }
 
   @Override
-  public void insert(Usuarios usuario) {
+  public void insert(Usuario usuario) {
     conn = obtenerConexion();
     PreparedStatement pst = null;
 
@@ -112,7 +112,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
   }
 
   @Override
-  public void update(Usuarios usuario) {
+  public void update(Usuario usuario) {
     if (this.existsById(usuario.getIdUsuario())) {
       conn = obtenerConexion();
       PreparedStatement pst = null;
@@ -169,11 +169,11 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
   }
 
   // <--- CAMBIO: Renombrado el método y su parámetro
-  public Usuarios getByCorreoElectronico(String correoElectronico) {
+  public Usuario getByCorreoElectronico(String correoElectronico) {
     Connection conn = obtenerConexion();
     PreparedStatement pst = null;
     ResultSet rs = null;
-    Usuarios usuario = null;
+    Usuario usuario = null;
 
     try {
       pst = conn.prepareStatement(SQL_GETBYCORREO); // <--- CAMBIO
@@ -182,7 +182,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
       rs = pst.executeQuery();
 
       if (rs.next()) {
-        usuario = new Usuarios();
+        usuario = new Usuario();
 
         usuario.setIdUsuario(rs.getInt("id_usuario"));
         usuario.setCorreoElectronico(rs.getString("correo_electronico")); // <--- CAMBIO
@@ -212,11 +212,11 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
     return usuario;
   }
 
-  public List<Usuarios> getByApellido(String apellido) {
+  public List<Usuario> getByApellido(String apellido) {
     conn = obtenerConexion();
     PreparedStatement pst = null;
     ResultSet rs = null;
-    List<Usuarios> listaUsuarios = new ArrayList<>();
+    List<Usuario> listaUsuarios = new ArrayList<>();
 
     try {
       pst = conn.prepareStatement(SQL_GET_BY_APELLIDO);
@@ -225,7 +225,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
       rs = pst.executeQuery();
 
       while (rs.next()) {
-        Usuarios usuario = new Usuarios();
+        Usuario usuario = new Usuario();
         usuario.setIdUsuario(rs.getInt("id_usuario"));
         usuario.setCorreoElectronico(rs.getString("correo_electronico"));
         usuario.setPassword(rs.getString("password"));
@@ -247,12 +247,12 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
   }
 
   @Override
-  public Usuarios getById(Integer id) {
+  public Usuario getById(Integer id) {
     // Declaración de variables inicializada fuera del try
     Connection conn = obtenerConexion();
     PreparedStatement pst = null;
     ResultSet rs = null;
-    Usuarios usuario = null; // Inicializado a null (valor de retorno por defecto)
+    Usuario usuario = null; // Inicializado a null (valor de retorno por defecto)
 
     try {
       pst = conn.prepareStatement(SQL_GETBYID);
@@ -261,7 +261,7 @@ public class UsuariosDAO implements DAO<Usuarios, Integer>, AdminConexion {
 
       if (rs.next()) {
         // Mapeo si se encuentra el registro
-        usuario = new Usuarios();
+        usuario = new Usuario();
         usuario.setIdUsuario(rs.getInt("id_usuario"));
         usuario.setCorreoElectronico(rs.getString("correo_electronico")); // <--- CAMBIO
         usuario.setPassword(rs.getString("password"));

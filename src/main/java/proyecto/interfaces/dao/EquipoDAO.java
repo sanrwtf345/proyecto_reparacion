@@ -4,7 +4,7 @@ import proyecto.interfaces.AdminConexion;
 import proyecto.interfaces.DAO;
 import proyecto.interfaces.entities.Cliente;
 import proyecto.interfaces.entities.Equipo;
-import proyecto.interfaces.entities.Usuarios;
+import proyecto.interfaces.entities.Usuario;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
       while (rs.next()) {
 
         // Construir el objeto USUARIO (Técnico) asociado al cliente (solo ID necesario)
-        Usuarios usuarioAsociado = new Usuarios();
+        Usuario usuarioAsociado = new Usuario();
         usuarioAsociado.setIdUsuario(rs.getInt("id_usuario"));
 
         // Construir el objeto CLIENTE (dueño del equipo)

@@ -1,7 +1,7 @@
 package proyecto.interfaces.servlets;
 
-import proyecto.interfaces.dao.UsuariosDAO;
-import proyecto.interfaces.entities.Usuarios;
+import proyecto.interfaces.dao.UsuarioDAO;
+import proyecto.interfaces.entities.Usuario;
 import proyecto.interfaces.enums.RolUsuario;
 import proyecto.interfaces.utils.PasswordUtil; // <--- PASO 1: IMPORTAR LA UTILIDAD
 
@@ -17,12 +17,12 @@ import java.io.IOException;
 @WebServlet("/LoginServlet")
 public class LoginServlet extends HttpServlet {
 
-  private UsuariosDAO usuarioDAO;
+  private UsuarioDAO usuarioDAO;
 
   @Override
   public void init() throws ServletException {
     // Inicializa el DAO
-    this.usuarioDAO = new UsuariosDAO();
+    this.usuarioDAO = new UsuarioDAO();
   }
 
   @Override
@@ -33,7 +33,7 @@ public class LoginServlet extends HttpServlet {
     String correoElectronico = request.getParameter("correoElectronico");
     String password = request.getParameter("password"); // Contraseña en TEXTO PLANO
 
-    Usuarios usuario = null;
+    Usuario usuario = null;
 
     try {
       // 2. Llama al DAO para buscar el usuario por correo

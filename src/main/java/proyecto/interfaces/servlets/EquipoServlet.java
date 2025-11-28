@@ -6,7 +6,7 @@ import proyecto.interfaces.dao.ReparacionDAO;
 import proyecto.interfaces.entities.Cliente;
 import proyecto.interfaces.entities.Equipo;
 import proyecto.interfaces.entities.Reparacion;
-import proyecto.interfaces.entities.Usuarios;
+import proyecto.interfaces.entities.Usuario;
 import proyecto.interfaces.enums.RolUsuario;
 
 import jakarta.servlet.ServletException;
@@ -191,7 +191,7 @@ public class EquipoServlet extends HttpServlet {
 
   private void guardarNuevoEquipo(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-    Usuarios tecnicoLogueado = (Usuarios) request.getSession().getAttribute("usuarioLogueado");
+    Usuario tecnicoLogueado = (Usuario) request.getSession().getAttribute("usuarioLogueado");
     Integer idUsuarioSesion = null;
 
     if (tecnicoLogueado != null) {
@@ -250,7 +250,7 @@ public class EquipoServlet extends HttpServlet {
 
   // Método auxiliar para redirección inteligente según rol
   private void redirigirAlMenu(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    Usuarios u = (Usuarios) request.getSession().getAttribute("usuarioLogueado");
+    Usuario u = (Usuario) request.getSession().getAttribute("usuarioLogueado");
     if (u != null && u.getRol() == RolUsuario.ADMIN) {
       response.sendRedirect(request.getContextPath() + "/vistas/admin/menuAdmin.jsp");
     } else {

@@ -76,6 +76,7 @@
         </thead>
         <tbody>
             <c:forEach var="orden" items="${requestScope.listaReparaciones}">
+                <%-- Obtenemos el estado como String para compararlo fácilmente --%>
                 <c:set var="estado" value="${orden.estado}" />
                 <tr>
                     <td class="fw-bold text-primary" headers="th-id">#${orden.idReparacion}</td>
@@ -83,44 +84,56 @@
                     <td headers="th-equipo">${orden.equipo.tipoEquipo} (${orden.equipo.marca})</td>
                     <td headers="th-falla">${orden.equipo.problemaReportado}</td>
                     <td headers="th-estado">
-                        <%-- Lógica para asignar un color de badge según el estado --%>
+                        <%-- CORRECCIÓN: Usamos los valores exactos del Enum EstadoReparacion --%>
                         <c:choose>
-                            <c:when test="${estado eq 'RECIBIDO' or estado eq 'RECEPCIONADO'}">
+                            <c:when test="${estado eq 'PENDIENTE'}">
                                 <span class="badge bg-danger text-uppercase" role="status">Pendiente</span>
                             </c:when>
-                            <c:when test="${estado eq 'DIAGNOSTICO'}">
-                                <span class="badge bg-warning text-dark text-uppercase" role="status">Diagnóstico</span>
+                            <c:when test="${estado eq 'EN_PROCESO'}">
+                                <span class="badge bg-primary text-uppercase" role="status">En Proceso</span>
                             </c:when>
-                            <c:when test="${estado eq 'PENDIENTE_PRESUPUESTO'}">
-                                <span class="badge bg-info text-dark text-uppercase" role="status">Presupuesto</span>
-                            </c:when>
-                            <c:when test="${estado eq 'EN_REPARACION'}">
-                                <span class="badge bg-primary text-uppercase" role="status">En Reparación</span>
+                            <c:when test="${estado eq 'FINALIZADO'}">
+                                <span class="badge bg-info text-dark text-uppercase" role="status">Finalizado</span>
                             </c:when>
                             <c:when test="${estado eq 'TERMINADO'}">
-                                <span class="badge bg-success text-uppercase" role="status">Terminado</span>
+                                <span class="badge bg-success text-uppercase" role="status">Entregado</span>
+                            </c:when>
+                            <c:when test="${estado eq 'CANCELADO'}">
+                                <span class="badge bg-secondary text-uppercase" role="status">Cancelado</span>
                             </c:when>
                             <c:otherwise>
                                 <span class="badge bg-secondary text-uppercase" role="status">${estado}</span>
                             </c:otherwise>
                         </c:choose>
                     </td>
-                    <td headers="th-fecha">${orden.fechaRecepcion}</td>
+                    <td headers="th-fecha">${orden.fechaCreacion.toLocalDate()}</td> <%-- Corregido para usar LocalDateTime --%>
                     <td headers="th-tecnico">${orden.usuario.nombre}</td>
                     <td headers="th-acciones">
-                        <a href="${pageContext.request.contextPath}/ReparacionController?action=verDetalle&id=${orden.idReparacion}"
-                           class="btn btn-sm btn-info text-white"
+
+                        <%-- Botón Editar/Gestionar Orden --%>
+                        <a href="${pageContext.request.contextPath}/ReparacionController?action=editar&id=${orden.idReparacion}"
+                           class="btn btn-sm btn-info text-white me-1"
                            role="button"
-                           aria-label="Ver Detalle de la Orden #${orden.idReparacion}">
-                            <i class="bi bi-eye-fill" aria-hidden="true"></i> Detalle
+                           aria-label="Gestionar Orden #${orden.idReparacion}">
+                            <i class="bi bi-pencil-square" aria-hidden="true"></i> Gestionar
                         </a>
+
+                        <%-- Botón Eliminar --%>
+                        <a href="${pageContext.request.contextPath}/ReparacionController?action=eliminar&id=${orden.idReparacion}"
+                           class="btn btn-sm btn-danger"
+                           role="button"
+                           onclick="return confirm('¿Está seguro de eliminar esta orden?');"
+                           aria-label="Eliminar Orden #${orden.idReparacion}">
+                            <i class="bi bi-trash" aria-hidden="true"></i>
+                        </a>
+
                     </td>
                 </tr>
             </c:forEach>
             <c:if test="${empty requestScope.listaReparaciones}">
                 <tr>
                     <td colspan="8" class="text-center p-4 fs-5 text-muted">
-                        <i class="bi bi-inbox me-2" aria-hidden="true"></i> ¡Genial! No hay órdenes de reparación activas.
+                        <i class="bi bi-inbox me-2" aria-hidden="true"></i> No hay órdenes de reparación registradas.
                     </td>
                 </tr>
             </c:if>
@@ -130,5 +143,5 @@
 <%-- FIN DEL CONTENIDO DE LA PÁGINA --%>
 
 
-<%-- 2. Incluimos el FOOTER de Técnico (Es compatible con Admin también, el CSS hace la magia) --%>
+<%-- 2. Incluimos el FOOTER de Técnico --%>
 <jsp:include page="/vistas/tecnico/comun/footerTecnico.jsp" />

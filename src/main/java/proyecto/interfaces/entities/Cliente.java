@@ -6,11 +6,11 @@ public class Cliente {
   private String apellido;
   private String telefono;
   private String email;
-  private Usuarios usuario;
+  private Usuario usuario;
 
   public Cliente(){}
 
-  public Cliente(int idCliente, String nombre, String apellido, String telefono, String email, Usuarios usuario) {
+  public Cliente(int idCliente, String nombre, String apellido, String telefono, String email, Usuario usuario) {
     this.idCliente = idCliente;
     this.nombre = nombre;
     this.apellido = apellido;
@@ -40,7 +40,7 @@ public class Cliente {
     this.email = email;
   }
 
-  public void setUsuario(Usuarios usuario) {
+  public void setUsuario(Usuario usuario) {
     this.usuario = usuario;
   }
 
@@ -65,7 +65,7 @@ public class Cliente {
     return email;
   }
 
-  public Usuarios getUsuario() {
+  public Usuario getUsuario() {
     return usuario;
   }
 

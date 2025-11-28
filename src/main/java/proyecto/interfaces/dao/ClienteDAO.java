@@ -3,7 +3,7 @@ package proyecto.interfaces.dao;
 import proyecto.interfaces.AdminConexion;
 import proyecto.interfaces.DAO;
 import proyecto.interfaces.entities.Cliente;
-import proyecto.interfaces.entities.Usuarios; // Asegúrate de importar tu clase Usuarios
+import proyecto.interfaces.entities.Usuario; // Asegúrate de importar tu clase Usuarios
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
         cliente.setEmail(rs.getString("email"));
 
         // ✅ CORRECCIÓN 1: Mapear la FK id_usuario a un objeto Usuarios (solo con el ID)
-        Usuarios usuario = new Usuarios();
+        Usuario usuario = new Usuario();
         usuario.setIdUsuario(rs.getInt("id_usuario"));
         cliente.setUsuario(usuario);
 
@@ -202,7 +202,7 @@ public class ClienteDAO implements DAO<Cliente, Integer>, AdminConexion {
         cliente.setEmail(rs.getString("email"));
 
         // ✅ CORRECCIÓN 1: Mapear la FK id_usuario a un objeto Usuarios (solo con el ID)
-        Usuarios usuario = new Usuarios();
+        Usuario usuario = new Usuario();
         usuario.setIdUsuario(rs.getInt("id_usuario"));
         cliente.setUsuario(usuario);
       }

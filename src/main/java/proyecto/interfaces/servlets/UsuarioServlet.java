@@ -1,7 +1,7 @@
 package proyecto.interfaces.servlets;
 
-import proyecto.interfaces.dao.UsuariosDAO;
-import proyecto.interfaces.entities.Usuarios;
+import proyecto.interfaces.dao.UsuarioDAO;
+import proyecto.interfaces.entities.Usuario;
 import proyecto.interfaces.enums.RolUsuario;
 import proyecto.interfaces.utils.PasswordUtil; // <--- PASO 1: IMPORTAR LA UTILIDAD
 
@@ -17,11 +17,11 @@ import java.util.List;
 
 @WebServlet("/UsuariosController")
 public class UsuarioServlet extends HttpServlet {
-  private UsuariosDAO usuarioDAO;
+  private UsuarioDAO usuarioDAO;
 
   @Override
   public void init() throws ServletException {
-    this.usuarioDAO = new UsuariosDAO();
+    this.usuarioDAO = new UsuarioDAO();
   }
 
 
@@ -73,10 +73,10 @@ public class UsuarioServlet extends HttpServlet {
 
 
   private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response, int idUsuario) throws Exception {
-    Usuarios usuario;
+    Usuario usuario;
     if (idUsuario == 0) {
       // Modo Creación
-      usuario = new Usuarios();
+      usuario = new Usuario();
       request.setAttribute("titulo", "Registrar Nuevo Usuario");
     } else {
       // Modo Edición: Cargar datos
@@ -110,7 +110,7 @@ public class UsuarioServlet extends HttpServlet {
     }
 
     try {
-      Usuarios nuevoUsuario = new Usuarios();
+      Usuario nuevoUsuario = new Usuario();
       nuevoUsuario.setCorreoElectronico(correoElectronico);
       nuevoUsuario.setNombre(nombre);
       nuevoUsuario.setApellido(apellido);
@@ -147,7 +147,7 @@ public class UsuarioServlet extends HttpServlet {
       String rolStr = request.getParameter("rol");
 
       // 2. Cargar el objeto existente
-      Usuarios usuarioAActualizar = usuarioDAO.getById(idUsuario);
+      Usuario usuarioAActualizar = usuarioDAO.getById(idUsuario);
       if (usuarioAActualizar == null) {
         throw new Exception("Usuario con ID " + idUsuario + " no encontrado para actualizar.");
       }
@@ -181,7 +181,7 @@ public class UsuarioServlet extends HttpServlet {
       // Recargamos el formulario en caso de error
       try {
         int idUsuarioError = Integer.parseInt(request.getParameter("idUsuario"));
-        Usuarios usuarioError = usuarioDAO.getById(idUsuarioError);
+        Usuario usuarioError = usuarioDAO.getById(idUsuarioError);
         request.setAttribute("usuario", usuarioError);
       } catch(Exception ex) {
         // Si falla la recarga, simplemente redirigimos
@@ -197,7 +197,7 @@ public class UsuarioServlet extends HttpServlet {
 
     // 1. Verificar si hay un término de búsqueda
     String busqueda = request.getParameter("busquedaApellido");
-    List<Usuarios> listaUsuarios;
+    List<Usuario> listaUsuarios;
 
     if (busqueda != null && !busqueda.trim().isEmpty()) {
       // Si hay búsqueda, usamos el método del DAO
@@ -218,7 +218,7 @@ public class UsuarioServlet extends HttpServlet {
       int idUsuario = Integer.parseInt(request.getParameter("idUsuario"));
 
       // No permite al admin eliminar su propia cuenta
-      Usuarios usuarioLogueado = (Usuarios) request.getSession().getAttribute("usuarioLogueado");
+      Usuario usuarioLogueado = (Usuario) request.getSession().getAttribute("usuarioLogueado");
 
       if (usuarioLogueado != null && usuarioLogueado.getIdUsuario() == idUsuario) {
         request.getSession().setAttribute("error", "Error: No puedes eliminar tu propia cuenta.");

@@ -2,7 +2,7 @@ package proyecto.interfaces.entities;
 
 import proyecto.interfaces.enums.RolUsuario;
 
-public class Usuarios implements Comparable {
+public class Usuario implements Comparable {
   private int idUsuario;
   private String correoElectronico; // <--- CAMBIO: de nombreUsuario a correoElectronico
   private String password;
@@ -10,11 +10,11 @@ public class Usuarios implements Comparable {
   private String apellido;
   private RolUsuario rol;
 
-  public Usuarios() {
+  public Usuario() {
   }
 
   // <--- CAMBIO: en el constructor
-  public Usuarios(String correoElectronico, String password, String nombre, String apellido, RolUsuario rol) {
+  public Usuario(String correoElectronico, String password, String nombre, String apellido, RolUsuario rol) {
     this.correoElectronico = correoElectronico;
     this.password = password;
     this.nombre = nombre;
@@ -23,7 +23,7 @@ public class Usuarios implements Comparable {
   }
 
   // <--- CAMBIO: en el constructor
-  public Usuarios(int idUsuario, String correoElectronico, String password, String nombre, String apellido, RolUsuario rol) {
+  public Usuario(int idUsuario, String correoElectronico, String password, String nombre, String apellido, RolUsuario rol) {
     this.idUsuario = idUsuario;
     this.correoElectronico = correoElectronico;
     this.password = password;
@@ -99,7 +99,7 @@ public class Usuarios implements Comparable {
 
   @Override
   public int compareTo(Object o) {
-    Usuarios otro = (Usuarios) o;
+    Usuario otro = (Usuario) o;
     int comparacionApellido = this.apellido.compareTo(otro.apellido);
 
     if (comparacionApellido != 0) {
