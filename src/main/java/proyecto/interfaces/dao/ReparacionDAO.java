@@ -14,6 +14,8 @@ import java.util.List;
 
 public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
+  // Defino todas las consultas SQL como constantes para tenerlas centralizadas y ordenadas.
+
   // SQL: Insertar todos los campos (incluyendo fechas y costos)
   private static final String SQL_INSERT =
       "INSERT INTO reparacion (id_equipo, id_usuario, diagnostico_final, estado, " +
@@ -26,7 +28,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
           "fecha_entrega_estimada = ?, fecha_diagnostico = ? " +
           "WHERE id_reparacion = ?";
 
-  // SQL: Obtener lista completa con JOINs para mostrar nombres
+  // SQL: Obtener lista completa con JOINs para mostrar nombres de cliente, equipo y técnico.
   private static final String SQL_GETALL =
       "SELECT r.*, e.tipo_equipo, e.marca, e.modelo, c.nombre AS nombre_cliente, c.apellido AS apellido_cliente, " +
           "u.nombre AS nombre_usuario " +
@@ -79,15 +81,17 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     List<Reparacion> lista = new ArrayList<>();
 
     try {
+      // Ejecuto la consulta general para traer todas las reparaciones.
       pst = conn.prepareStatement(SQL_GETALL);
       rs = pst.executeQuery();
       while (rs.next()) {
-        // Usamos un método helper para no repetir código de mapeo
+        // Uso un método auxiliar para convertir cada fila del ResultSet en un objeto Reparacion.
         lista.add(mapResultSetToReparacion(rs, false));
       }
     } catch (SQLException e) {
       throw new RuntimeException("Error al listar reparaciones", e);
     } finally {
+      // Cierro los recursos para evitar bloqueos en la base de datos.
       cerrarRecursos(rs, pst, conn);
     }
     return lista;
@@ -101,11 +105,13 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     Reparacion reparacion = null;
 
     try {
+      // Busco una reparación específica por su ID.
       pst = conn.prepareStatement(SQL_GETBYID);
       pst.setInt(1, id);
       rs = pst.executeQuery();
       if (rs.next()) {
-        reparacion = mapResultSetToReparacion(rs, true); // true = carga detalle completo de cliente/equipo
+        // Mapeo el resultado solicitando el objeto completo (true) para tener todos los detalles.
+        reparacion = mapResultSetToReparacion(rs, true);
       }
     } catch (SQLException e) {
       throw new RuntimeException("Error al obtener reparación por ID", e);
@@ -122,27 +128,33 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     ResultSet rs = null;
 
     try {
+      // Preparo la inserción solicitando el ID generado.
       pst = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
 
+      // Asigno las claves foráneas (IDs de equipo y técnico).
       pst.setInt(1, r.getEquipo().getIdEquipo());
       pst.setInt(2, r.getUsuario().getIdUsuario());
       pst.setString(3, r.getDiagnosticoFinal());
 
-      // Conversión: Enum -> String
+      // Convierto mi Enum de Java a un String para poder guardarlo en la base de datos.
       pst.setString(4, r.getEstado().name());
 
+      // Guardo los costos usando BigDecimal para mantener la precisión monetaria.
       pst.setBigDecimal(5, r.getCostoRepuestos());
       pst.setBigDecimal(6, r.getCostoManoObra());
       pst.setBigDecimal(7, r.getPresupuestoTotal());
 
-      // Conversión: LocalDate -> java.sql.Date
+      // Convierto las fechas de LocalDate a java.sql.Date, manejando posibles nulos.
       pst.setDate(8, r.getFechaEntregaEstimada() != null ? Date.valueOf(r.getFechaEntregaEstimada()) : null);
       pst.setDate(9, r.getFechaDiagnostico() != null ? Date.valueOf(r.getFechaDiagnostico()) : null);
 
       int res = pst.executeUpdate();
       if (res == 1) {
         rs = pst.getGeneratedKeys();
-        if (rs.next()) r.setIdReparacion(rs.getInt(1));
+        if (rs.next()) {
+          // Actualizo el objeto con el ID que asignó la base de datos.
+          r.setIdReparacion(rs.getInt(1));
+        }
         System.out.println("Reparación insertada con ID: " + r.getIdReparacion());
       }
     } catch (SQLException e) {
@@ -160,6 +172,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     try {
       pst = conn.prepareStatement(SQL_UPDATE);
 
+      // Actualizo todos los campos, incluyendo costos y fechas modificadas.
       pst.setInt(1, r.getUsuario().getIdUsuario());
       pst.setString(2, r.getDiagnosticoFinal());
       pst.setString(3, r.getEstado().name()); // Enum -> String
@@ -169,7 +182,8 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
       pst.setDate(7, r.getFechaEntregaEstimada() != null ? Date.valueOf(r.getFechaEntregaEstimada()) : null);
       pst.setDate(8, r.getFechaDiagnostico() != null ? Date.valueOf(r.getFechaDiagnostico()) : null);
 
-      pst.setInt(9, r.getIdReparacion()); // WHERE
+      // Uso el ID en el WHERE para asegurar la integridad de la actualización.
+      pst.setInt(9, r.getIdReparacion());
 
       pst.executeUpdate();
       System.out.println("Reparación actualizada ID: " + r.getIdReparacion());
@@ -203,6 +217,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     ResultSet rs = null;
     boolean existe = false;
     try {
+      // Verifico rápidamente la existencia del registro.
       pst = conn.prepareStatement(SQL_EXISTS);
       pst.setInt(1, id);
       rs = pst.executeQuery();
@@ -213,7 +228,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
   }
 
   /**
-   * Obtiene reparaciones por ID de equipo (para cascade delete).
+   * Obtiene reparaciones por ID de equipo. Útil para eliminaciones en cascada.
    */
   public List<Reparacion> getByEquipoId(Integer idEquipo) {
     Connection conn = obtenerConexion();
@@ -241,17 +256,16 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     List<Reparacion> lista = new ArrayList<>();
 
     try {
+      // Filtro los resultados según el estado seleccionado en la vista.
       pst = conn.prepareStatement(SQL_GET_BY_ESTADO);
-      pst.setString(1, estado.name()); // Importante: Enum a String
+      pst.setString(1, estado.name()); // Importante: Paso el Enum como String
       rs = pst.executeQuery();
       while (rs.next()) {
-        // Reutiliza tu método mapResultSetToReparacion existente
         lista.add(mapResultSetToReparacion(rs, false));
       }
     } catch (SQLException e) {
       throw new RuntimeException("Error al filtrar por estado", e);
     } finally {
-      // Reutiliza tu método cerrarRecursos existente
       cerrarRecursos(rs, pst, conn);
     }
     return lista;
@@ -264,11 +278,11 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     List<Reparacion> lista = new ArrayList<>();
 
     try {
+      // Obtengo el historial completo filtrando por el ID del equipo.
       pst = conn.prepareStatement(SQL_GET_HISTORIAL_POR_EQUIPO);
       pst.setInt(1, idEquipo);
       rs = pst.executeQuery();
       while (rs.next()) {
-        // Reutilizamos el helper que ya creamos antes
         lista.add(mapResultSetToReparacion(rs, false));
       }
     } catch (SQLException e) {
@@ -282,14 +296,14 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
   // --- MÉTODOS AUXILIARES ---
 
   /**
-   * Convierte una fila del ResultSet en un objeto Reparacion.
-   * Maneja la conversión de Enum y Fechas.
+   * Método centralizado para convertir una fila de la BD (ResultSet) en un objeto Java (Reparacion).
+   * Esto evita duplicar código de mapeo en cada consulta.
    */
   private Reparacion mapResultSetToReparacion(ResultSet rs, boolean completo) throws SQLException {
     Reparacion r = new Reparacion();
     r.setIdReparacion(rs.getInt("id_reparacion"));
 
-    // Mapeo de Enum (String -> EstadoReparacion)
+    // Convierto el String de la BD de vuelta a mi Enum de Java.
     try {
       String estadoStr = rs.getString("estado");
       if(estadoStr != null) {
@@ -298,7 +312,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
         r.setEstado(EstadoReparacion.PENDIENTE);
       }
     } catch (IllegalArgumentException e) {
-      r.setEstado(EstadoReparacion.PENDIENTE); // Fallback por seguridad
+      r.setEstado(EstadoReparacion.PENDIENTE); // Uso un valor seguro por defecto si falla la conversión.
     }
 
     r.setDiagnosticoFinal(rs.getString("diagnostico_final"));
@@ -306,7 +320,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     r.setCostoManoObra(rs.getBigDecimal("costo_mano_obra"));
     r.setPresupuestoTotal(rs.getBigDecimal("presupuesto_total"));
 
-    // Mapeo de Fechas (SQL -> Java Time)
+    // Convierto los Timestamps y Dates de SQL a los tipos modernos de Java Time.
     Timestamp ts = rs.getTimestamp("fecha_creacion");
     if (ts != null) r.setFechaCreacion(ts.toLocalDateTime());
 
@@ -316,12 +330,12 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     Date fe = rs.getDate("fecha_entrega_estimada");
     if (fe != null) r.setFechaEntregaEstimada(fe.toLocalDate());
 
-    // Mapeo de Objetos Relacionados
+    // Mapeo los objetos relacionados (Equipo y Cliente).
     Equipo e = new Equipo();
     e.setIdEquipo(rs.getInt("id_equipo"));
 
     if (completo) {
-      // Datos detallados para ver detalle/editar
+      // Si necesito el detalle completo, cargo todos los campos.
       e.setTipoEquipo(rs.getString("tipo_equipo"));
       e.setMarca(rs.getString("marca"));
       e.setModelo(rs.getString("modelo"));
@@ -336,7 +350,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
       if(hasColumn(rs, "telefono")) c.setTelefono(rs.getString("telefono"));
       e.setCliente(c);
     } else {
-      // Datos ligeros para listados
+      // Si es para un listado, cargo solo los datos esenciales para mejorar el rendimiento.
       if(hasColumn(rs, "tipo_equipo")) e.setTipoEquipo(rs.getString("tipo_equipo"));
       if(hasColumn(rs, "marca")) e.setMarca(rs.getString("marca"));
       if(hasColumn(rs, "modelo")) e.setModelo(rs.getString("modelo"));
@@ -362,6 +376,7 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
     try { if (conn != null) conn.close(); } catch (Exception e) {}
   }
 
+  // Método auxiliar para verificar si una columna existe en el resultado antes de leerla.
   private boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
     ResultSetMetaData rsmd = rs.getMetaData();
     int columns = rsmd.getColumnCount();

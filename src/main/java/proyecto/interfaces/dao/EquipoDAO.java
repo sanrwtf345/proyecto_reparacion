@@ -12,8 +12,7 @@ import java.util.List;
 
 public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
-  // Se elimina 'private Connection conn = null;' para garantizar thread-safety.
-
+  // Defino mis consultas SQL aquí arriba para no tenerlas dispersas por el código.
   private static final String SQL_GETALL =
       "SELECT e.*, c.nombre AS nombre_cliente, c.apellido AS apellido_cliente, " +
           "c.telefono AS telefono_cliente, c.email AS email_cliente, c.id_usuario " +
@@ -29,14 +28,12 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
       "UPDATE equipo SET tipo_equipo = ?, marca = ?, modelo = ?, num_serie = ?, problema_reportado = ? " +
           "WHERE id_equipo = ?";
 
-  // ✅ CORRECCIÓN 1: El DELETE debe apuntar a la tabla 'equipo'
   private static final String SQL_DELETE =
       "DELETE FROM equipo WHERE id_equipo = ?";
 
   private static final String SQL_GETBYID =
       "SELECT * FROM equipo WHERE id_equipo = ?";
 
-  // ✅ NUEVO: Query para obtener equipos por ID de cliente
   private static final String SQL_GETBYCLIENTEID =
       "SELECT id_equipo, id_cliente, tipo_equipo, marca, modelo, num_serie, problema_reportado " +
           "FROM equipo WHERE id_cliente = ?";
@@ -44,34 +41,34 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public List<Equipo> getAll() {
-    Connection conn = obtenerConexion(); // ✅ Conexión local
+    Connection conn = obtenerConexion();
     PreparedStatement pst = null;
     ResultSet rs = null;
     List<Equipo> listaEquipos = new ArrayList<>();
 
     try {
+      // Ejecuto la consulta con JOIN para traer no solo el equipo, sino los datos de su dueño.
       pst = conn.prepareStatement(SQL_GETALL);
       rs = pst.executeQuery();
 
       while (rs.next()) {
-
-        // Construir el objeto USUARIO (Técnico) asociado al cliente (solo ID necesario)
+        // Reconstruyo el objeto Usuario (Técnico) solo con su ID.
         Usuario usuarioAsociado = new Usuario();
         usuarioAsociado.setIdUsuario(rs.getInt("id_usuario"));
 
-        // Construir el objeto CLIENTE (dueño del equipo)
+        // Reconstruyo el Cliente completo porque mi consulta trajo sus datos.
         Cliente cliente = new Cliente();
         cliente.setIdCliente(rs.getInt("id_cliente"));
         cliente.setNombre(rs.getString("nombre_cliente"));
         cliente.setApellido(rs.getString("apellido_cliente"));
         cliente.setTelefono(rs.getString("telefono_cliente"));
         cliente.setEmail(rs.getString("email_cliente"));
-        cliente.setUsuario(usuarioAsociado); // Asignar el técnico asociado
+        cliente.setUsuario(usuarioAsociado);
 
-        // Construir el objeto EQUIPO
+        // Finalmente armo el Equipo y le asocio el Cliente que acabo de crear.
         Equipo equipo = new Equipo();
         equipo.setIdEquipo(rs.getInt("id_equipo"));
-        equipo.setCliente(cliente); // Establecer la relación
+        equipo.setCliente(cliente);
         equipo.setTipoEquipo(rs.getString("tipo_equipo"));
         equipo.setMarca(rs.getString("marca"));
         equipo.setModelo(rs.getString("modelo"));
@@ -82,7 +79,6 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
       }
 
     } catch (SQLException e) {
-      System.err.println("Error al obtener todos los equipos: " + e.getMessage());
       throw new RuntimeException("Error en Base de Datos al listar equipos", e);
     } finally {
       try {
@@ -99,9 +95,6 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   /**
    * Obtiene todos los equipos asociados a un ID de Cliente.
-   * Necesario para la eliminación en cascada de Cliente.
-   * @param idCliente El ID del cliente a buscar.
-   * @return Lista de Equipos pertenecientes a ese cliente.
    */
   public List<Equipo> getByClienteId(Integer idCliente) {
     Connection conn = obtenerConexion();
@@ -110,20 +103,20 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
     List<Equipo> listaEquipos = new ArrayList<>();
 
     try {
+      // Busco específicamente los equipos de un cliente para mostrarlos en su detalle.
       pst = conn.prepareStatement(SQL_GETBYCLIENTEID);
       pst.setInt(1, idCliente);
       rs = pst.executeQuery();
 
-      // Creamos un placeholder de cliente para la FK, solo necesitamos el ID.
+      // Creo un cliente "vacío" solo con el ID para cumplir con la relación de objeto.
       Cliente clientePlaceholder = new Cliente();
       clientePlaceholder.setIdCliente(idCliente);
 
       while (rs.next()) {
         Equipo equipo = new Equipo();
         equipo.setIdEquipo(rs.getInt("id_equipo"));
-        equipo.setCliente(clientePlaceholder); // Asignar el placeholder de cliente
+        equipo.setCliente(clientePlaceholder);
 
-        // Mapeo mínimo de campos, aunque para la eliminación solo necesitamos el ID
         equipo.setTipoEquipo(rs.getString("tipo_equipo"));
         equipo.setMarca(rs.getString("marca"));
         equipo.setModelo(rs.getString("modelo"));
@@ -134,7 +127,6 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
       }
 
     } catch (SQLException e) {
-      System.err.println("Error al obtener equipos por ID de cliente: " + e.getMessage());
       throw new RuntimeException("Error en Base de Datos al listar equipos por cliente", e);
     } finally {
       try {
@@ -152,14 +144,14 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public void insert(Equipo equipo) {
-    Connection conn = obtenerConexion(); // ✅ Conexión local
+    Connection conn = obtenerConexion();
     PreparedStatement pst = null;
     ResultSet rs = null;
 
     try {
+      // Pido las claves generadas para saber qué ID le asignó la base de datos al nuevo equipo.
       pst = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
 
-      // Los índices 1 a 6 corresponden al SQL_INSERT
       pst.setInt(1, equipo.getCliente().getIdCliente());
       pst.setString(2, equipo.getTipoEquipo());
       pst.setString(3, equipo.getMarca());
@@ -171,7 +163,8 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
       if (resultado == 1) {
         rs = pst.getGeneratedKeys();
         if (rs.next()) {
-          equipo.setIdEquipo(rs.getInt(1)); // ✅ Setea el ID en el objeto Equipo
+          // Guardo el ID nuevo en mi objeto Java para poder usarlo inmediatamente si lo necesito.
+          equipo.setIdEquipo(rs.getInt(1));
         }
         System.out.println("Equipo insertado con ID: " + equipo.getIdEquipo());
       }
@@ -192,17 +185,19 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public void update(Equipo equipo) {
-    Connection conn = obtenerConexion(); // ✅ Conexión local
+    Connection conn = obtenerConexion();
     PreparedStatement pst = null;
 
     try {
       pst = conn.prepareStatement(SQL_UPDATE);
 
+      // Cargo los datos modificados en la consulta de actualización.
       pst.setString(1, equipo.getTipoEquipo());
       pst.setString(2, equipo.getMarca());
       pst.setString(3, equipo.getModelo());
       pst.setString(4, equipo.getNumeroSerie());
       pst.setString(5, equipo.getProblemaReportado());
+      // El ID va al final porque está en la cláusula WHERE.
       pst.setInt(6, equipo.getIdEquipo());
 
       int resultado = pst.executeUpdate();
@@ -213,7 +208,6 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
       }
 
     } catch (SQLException e) {
-      System.err.println("Error al actualizar el equipo: " + e.getMessage());
       throw new RuntimeException("Error en Base de Datos al actualizar equipo", e);
     } finally {
       try {
@@ -227,7 +221,7 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public void delete(Integer id) {
-    Connection conn = obtenerConexion(); // ✅ Conexión local
+    Connection conn = obtenerConexion();
     PreparedStatement pst = null;
 
     try {
@@ -256,12 +250,13 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public Equipo getById(Integer id) {
-    Connection conn = obtenerConexion(); // ✅ Conexión local
+    Connection conn = obtenerConexion();
     PreparedStatement pst = null;
     ResultSet rs = null;
     Equipo equipo = null;
 
     try {
+      // Busco un equipo específico para editarlo.
       pst = conn.prepareStatement(SQL_GETBYID);
       pst.setInt(1, id);
       rs = pst.executeQuery();
@@ -272,12 +267,10 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
         equipo.setTipoEquipo(rs.getString("tipo_equipo"));
         equipo.setMarca(rs.getString("marca"));
         equipo.setModelo(rs.getString("modelo"));
-        equipo.setNumeroSerie(rs.getString("num_serie")); // Asumo que esta columna existe
+        equipo.setNumeroSerie(rs.getString("num_serie"));
         equipo.setProblemaReportado(rs.getString("problema_reportado"));
 
-        // ⚠️ Nota: getById solo trae datos del equipo. Para tener el objeto Cliente completo,
-        // necesitarías usar un JOIN o llamar a ClienteDAO.getById(rs.getInt("id_cliente")).
-        // Por ahora, solo mapeamos la FK como ID:
+        // Como esta consulta no tiene JOIN, solo recupero el ID del cliente.
         Cliente clientePlaceholder = new Cliente();
         clientePlaceholder.setIdCliente(rs.getInt("id_cliente"));
         equipo.setCliente(clientePlaceholder);
@@ -299,12 +292,13 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public boolean existsById(Integer id) {
-    Connection conn = obtenerConexion(); // ✅ Conexión local
+    Connection conn = obtenerConexion();
     PreparedStatement pst = null;
     ResultSet rs = null;
     boolean existe = false;
 
     try {
+      // Verificación rápida de existencia.
       pst = conn.prepareStatement(SQL_GETBYID);
       pst.setInt(1, id);
       rs = pst.executeQuery();
