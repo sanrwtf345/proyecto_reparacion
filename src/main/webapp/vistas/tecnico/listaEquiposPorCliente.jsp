@@ -69,20 +69,28 @@
                     <td>${equipo.numeroSerie}</td>
                     <td class="text-center">
 
-                        <%-- === BOTÓN NUEVO: CREAR ORDEN === --%>
+                        <%-- === BOTÓN NUEVO: CREAR ORDEN (Verde) === --%>
                         <a href="${pageContext.request.contextPath}/ReparacionController?action=nueva&idEquipo=${equipo.idEquipo}"
-                           class="btn btn-success btn-sm text-white me-2"
+                           class="btn btn-success btn-sm text-white me-1"
                            title="Iniciar nueva reparación para este equipo">
-                            <i class="bi bi-tools"></i> Crear Orden
+                            <i class="bi bi-tools"></i>
                         </a>
-                        <%-- ================================= --%>
 
+                        <%-- === BOTÓN NUEVO: VER HISTORIAL (Gris) === --%>
+                        <a href="${pageContext.request.contextPath}/EquipoController?action=verHistorial&idEquipo=${equipo.idEquipo}"
+                           class="btn btn-secondary btn-sm text-white me-1"
+                           title="Ver historial de reparaciones">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
+
+                        <%-- BOTÓN EDITAR (Azul/Cian) --%>
                         <a href="${pageContext.request.contextPath}/EquipoController?action=mostrarEditarEquipo&idEquipo=${equipo.idEquipo}"
-                           class="btn btn-info btn-sm text-white me-2"
+                           class="btn btn-info btn-sm text-white me-1"
                            title="Editar datos del equipo">
                             <i class="bi bi-pencil-fill"></i>
                         </a>
 
+                        <%-- BOTÓN ELIMINAR (Rojo) --%>
                         <a href="${pageContext.request.contextPath}/EquipoController?action=eliminarEquipo&idEquipo=${equipo.idEquipo}&idCliente=${cliente.idCliente}"
                            class="btn btn-danger btn-sm"
                            onclick="return confirm('¿Eliminar equipo y su historial?');"

@@ -55,10 +55,11 @@ public class EquipoServlet extends HttpServlet {
         case "eliminarEquipo":
           eliminarEquipo(request, response);
           break;
-
-        // --- ACCIÓN PARA MOSTRAR EL FORMULARIO DE EDICIÓN (NUEVO) ---
         case "mostrarEditarEquipo":
           mostrarFormularioEditarEquipo(request, response);
+          break;
+        case "verHistorial":
+          verHistorial(request, response);
           break;
 
         default:
@@ -256,5 +257,31 @@ public class EquipoServlet extends HttpServlet {
     } else {
       response.sendRedirect(request.getContextPath() + "/vistas/tecnico/menuTecnico.jsp");
     }
+  }
+
+  // --- MÉTODO PARA VER HISTORIAL ---
+  private void verHistorial(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    // 1. Obtener ID
+    int idEquipo = Integer.parseInt(request.getParameter("idEquipo"));
+
+    // 2. Buscar el equipo (para tener sus datos: marca, modelo, etc.)
+    Equipo equipo = equipoDAO.getById(idEquipo);
+    if (equipo == null) {
+      throw new Exception("Equipo no encontrado");
+    }
+
+    // 3. Cargar el cliente asociado (necesario para el botón 'Volver')
+    // (El getById del equipo solo trae el ID del cliente, buscamos el objeto completo)
+    Cliente cliente = clienteDAO.getById(equipo.getCliente().getIdCliente());
+    equipo.setCliente(cliente);
+
+    // 4. Buscar el historial de reparaciones usando el nuevo método del DAO
+    List<Reparacion> historial = reparacionDAO.getHistorialPorEquipo(idEquipo);
+
+    // 5. Enviar datos al JSP
+    request.setAttribute("equipo", equipo);
+    request.setAttribute("historial", historial);
+
+    request.getRequestDispatcher("/vistas/tecnico/historialReparaciones.jsp").forward(request, response);
   }
 }

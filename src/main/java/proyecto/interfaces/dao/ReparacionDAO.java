@@ -51,6 +51,26 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
   private static final String SQL_GETBY_EQUIPO = "SELECT * FROM reparacion WHERE id_equipo = ?";
   private static final String SQL_EXISTS = "SELECT id_reparacion FROM reparacion WHERE id_reparacion = ?";
 
+  private static final String SQL_GET_BY_ESTADO =
+      "SELECT r.*, e.tipo_equipo, e.marca, e.modelo, c.nombre AS nombre_cliente, c.apellido AS apellido_cliente, " +
+          "u.nombre AS nombre_usuario " +
+          "FROM reparacion r " +
+          "JOIN equipo e ON r.id_equipo = e.id_equipo " +
+          "JOIN clientes c ON e.id_cliente = c.id_cliente " +
+          "JOIN usuarios u ON r.id_usuario = u.id_usuario " +
+          "WHERE r.estado = ? " +
+          "ORDER BY r.fecha_creacion DESC";
+
+  private static final String SQL_GET_HISTORIAL_POR_EQUIPO =
+      "SELECT r.*, e.tipo_equipo, e.marca, e.modelo, c.nombre AS nombre_cliente, c.apellido AS apellido_cliente, " +
+          "u.nombre AS nombre_usuario " +
+          "FROM reparacion r " +
+          "JOIN equipo e ON r.id_equipo = e.id_equipo " +
+          "JOIN clientes c ON e.id_cliente = c.id_cliente " +
+          "JOIN usuarios u ON r.id_usuario = u.id_usuario " +
+          "WHERE r.id_equipo = ? " +
+          "ORDER BY r.fecha_creacion DESC";
+
   @Override
   public List<Reparacion> getAll() {
     Connection conn = obtenerConexion();
@@ -211,6 +231,51 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
       }
     } catch (SQLException e) { throw new RuntimeException(e); }
     finally { cerrarRecursos(rs, pst, conn); }
+    return lista;
+  }
+
+  public List<Reparacion> getByEstado(EstadoReparacion estado) {
+    Connection conn = obtenerConexion();
+    PreparedStatement pst = null;
+    ResultSet rs = null;
+    List<Reparacion> lista = new ArrayList<>();
+
+    try {
+      pst = conn.prepareStatement(SQL_GET_BY_ESTADO);
+      pst.setString(1, estado.name()); // Importante: Enum a String
+      rs = pst.executeQuery();
+      while (rs.next()) {
+        // Reutiliza tu método mapResultSetToReparacion existente
+        lista.add(mapResultSetToReparacion(rs, false));
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Error al filtrar por estado", e);
+    } finally {
+      // Reutiliza tu método cerrarRecursos existente
+      cerrarRecursos(rs, pst, conn);
+    }
+    return lista;
+  }
+
+  public List<Reparacion> getHistorialPorEquipo(Integer idEquipo) {
+    Connection conn = obtenerConexion();
+    PreparedStatement pst = null;
+    ResultSet rs = null;
+    List<Reparacion> lista = new ArrayList<>();
+
+    try {
+      pst = conn.prepareStatement(SQL_GET_HISTORIAL_POR_EQUIPO);
+      pst.setInt(1, idEquipo);
+      rs = pst.executeQuery();
+      while (rs.next()) {
+        // Reutilizamos el helper que ya creamos antes
+        lista.add(mapResultSetToReparacion(rs, false));
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Error al obtener historial del equipo", e);
+    } finally {
+      cerrarRecursos(rs, pst, conn);
+    }
     return lista;
   }
 

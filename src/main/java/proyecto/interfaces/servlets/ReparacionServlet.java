@@ -83,8 +83,35 @@ public class ReparacionServlet extends HttpServlet {
   // --- MÉTODOS DE VISUALIZACIÓN ---
 
   private void listarReparaciones(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    List<Reparacion> lista = reparacionDAO.getAll();
+
+    // 1. Capturar el filtro del JSP
+    String estadoStr = request.getParameter("filtroEstado");
+    List<Reparacion> lista;
+
+    try {
+      if (estadoStr != null && !estadoStr.trim().isEmpty()) {
+        // Si hay filtro: Convertir String -> Enum y buscar
+        EstadoReparacion estado = EstadoReparacion.valueOf(estadoStr);
+        lista = reparacionDAO.getByEstado(estado);
+
+        // Guardamos el estado para que el <select> no se resetee
+        request.setAttribute("estadoSeleccionado", estadoStr);
+      } else {
+        // Si no hay filtro: Traer todo
+        lista = reparacionDAO.getAll();
+      }
+    } catch (IllegalArgumentException e) {
+      // Si el estado no es válido (ej. alguien manipuló la URL), traemos todo por seguridad
+      lista = reparacionDAO.getAll();
+    }
+
+    // 2. Enviar la lista de resultados
     request.setAttribute("listaReparaciones", lista);
+
+    // 3. ¡IMPORTANTE! Enviar la lista de opciones para llenar el <select>
+    // Esto es necesario para que el dropdown tenga opciones (PENDIENTE, TERMINADO, etc.)
+    request.setAttribute("listaEstados", Arrays.asList(EstadoReparacion.values()));
+
     request.getRequestDispatcher("/vistas/tecnico/listaReparaciones.jsp").forward(request, response);
   }
 
