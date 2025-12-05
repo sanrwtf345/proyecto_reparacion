@@ -147,7 +147,7 @@ public class EquipoServlet extends HttpServlet {
     }
   }
 
-  // --- MÉTODO PARA ACTUALIZAR (NUEVO) ---
+  // --- MÉTODO PARA ACTUALIZAR  ---
   private void actualizarEquipo(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String idClienteStr = request.getParameter("idCliente"); // Para redirigir de vuelta
 
@@ -271,7 +271,6 @@ public class EquipoServlet extends HttpServlet {
     }
 
     // 3. Cargar el cliente asociado (necesario para el botón 'Volver')
-    // (El getById del equipo solo trae el ID del cliente, buscamos el objeto completo)
     Cliente cliente = clienteDAO.getById(equipo.getCliente().getIdCliente());
     equipo.setCliente(cliente);
 

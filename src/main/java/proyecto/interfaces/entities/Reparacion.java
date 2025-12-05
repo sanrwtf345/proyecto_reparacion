@@ -1,19 +1,19 @@
 package proyecto.interfaces.entities;
 
-import proyecto.interfaces.enums.EstadoReparacion; // Importar el Enum
+import proyecto.interfaces.enums.EstadoReparacion;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime; // Para el TIMESTAMP de la BD
+import java.time.LocalDateTime;
 
 public class Reparacion {
 
   private int idReparacion;
   private Equipo equipo;
 
-  // CORRECCIÓN: Usamos 'Usuario' (singular)
+  // CORRECCIÓN: Usamos 'Usuario'
   private Usuario usuario;
 
-  private LocalDateTime fechaCreacion; // Coincide con TIMESTAMP de BD
+  private LocalDateTime fechaCreacion;
   private LocalDate fechaDiagnostico;
   private LocalDate fechaEntregaEstimada;
   private String diagnosticoFinal;

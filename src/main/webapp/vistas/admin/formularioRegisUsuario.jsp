@@ -42,14 +42,14 @@
                 <input type="hidden" name="idUsuario" value="${usuario.idUsuario}">
             </c:if>
 
-            <%-- ########## SECCIÓN MODIFICADA ########## --%>
+
             <div class="mb-3">
                 <label for="correoElectronico" class="form-label">Correo Electrónico (Login)</label>
                 <%-- Valor Pre-llenado --%>
                 <input type="email" class="form-control" id="correoElectronico" name="correoElectronico" required
                        value="${usuario.correoElectronico}">
             </div>
-            <%-- ########################################## --%>
+
 
 
             <div class="row">
@@ -66,7 +66,7 @@
             </div>
 
 
-            <%-- ########## SECCIÓN CORREGIDA ########## --%>
+
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="password" class="form-label">Contraseña</label>
@@ -80,7 +80,7 @@
                            <%-- CORRECCIÓN 2: El placeholder cambia si el ID es > 0 (Edición) --%>
                            placeholder="${usuario.idUsuario > 0 ? 'Dejar vacío para NO cambiar' : 'Requerida para registrar'}">
                 </div>
-            <%-- ######################################## --%>
+
 
                 <div class="col-md-6 mb-3">
                     <label for="rol" class="form-label">Rol</label>

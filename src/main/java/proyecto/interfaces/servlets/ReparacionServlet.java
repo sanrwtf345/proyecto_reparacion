@@ -108,7 +108,7 @@ public class ReparacionServlet extends HttpServlet {
     // 2. Enviar la lista de resultados
     request.setAttribute("listaReparaciones", lista);
 
-    // 3. ¡IMPORTANTE! Enviar la lista de opciones para llenar el <select>
+    // 3. Enviar la lista de opciones para llenar el <select>
     // Esto es necesario para que el dropdown tenga opciones (PENDIENTE, TERMINADO, etc.)
     request.setAttribute("listaEstados", Arrays.asList(EstadoReparacion.values()));
 

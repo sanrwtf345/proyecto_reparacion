@@ -3,7 +3,7 @@ package proyecto.interfaces.servlets;
 import proyecto.interfaces.dao.UsuarioDAO;
 import proyecto.interfaces.entities.Usuario;
 import proyecto.interfaces.enums.RolUsuario;
-import proyecto.interfaces.utils.PasswordUtil; // <--- PASO 1: IMPORTAR LA UTILIDAD
+import proyecto.interfaces.utils.PasswordUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
