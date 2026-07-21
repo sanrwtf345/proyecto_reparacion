@@ -12,7 +12,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
+public class ReparacionDAO implements DAO<Reparacion, Integer> {
 
   // Defino todas las consultas SQL como constantes para tenerlas centralizadas y ordenadas.
 
@@ -75,13 +75,14 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
   @Override
   public List<Reparacion> getAll() {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
     List<Reparacion> lista = new ArrayList<>();
 
     try {
       // Ejecuto la consulta general para traer todas las reparaciones.
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_GETALL);
       rs = pst.executeQuery();
       while (rs.next()) {
@@ -99,13 +100,14 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
   @Override
   public Reparacion getById(Integer id) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
     Reparacion reparacion = null;
 
     try {
       // Busco una reparación específica por su ID.
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_GETBYID);
       pst.setInt(1, id);
       rs = pst.executeQuery();
@@ -123,11 +125,12 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
   @Override
   public void insert(Reparacion r) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
 
     try {
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       // Preparo la inserción solicitando el ID generado.
       pst = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
 
@@ -166,10 +169,11 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
   @Override
   public void update(Reparacion r) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
 
     try {
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_UPDATE);
 
       // Actualizo todos los campos, incluyendo costos y fechas modificadas.
@@ -197,9 +201,10 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
   @Override
   public void delete(Integer id) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     try {
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_DELETE);
       pst.setInt(1, id);
       pst.executeUpdate();
@@ -212,12 +217,13 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
 
   @Override
   public boolean existsById(Integer id) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
     boolean existe = false;
     try {
       // Verifico rápidamente la existencia del registro.
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_EXISTS);
       pst.setInt(1, id);
       rs = pst.executeQuery();
@@ -231,11 +237,12 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
    * Obtiene reparaciones por ID de equipo. Útil para eliminaciones en cascada.
    */
   public List<Reparacion> getByEquipoId(Integer idEquipo) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
     List<Reparacion> lista = new ArrayList<>();
     try {
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_GETBY_EQUIPO);
       pst.setInt(1, idEquipo);
       rs = pst.executeQuery();
@@ -250,13 +257,14 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
   }
 
   public List<Reparacion> getByEstado(EstadoReparacion estado) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
     List<Reparacion> lista = new ArrayList<>();
 
     try {
       // Filtro los resultados según el estado seleccionado en la vista.
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_GET_BY_ESTADO);
       pst.setString(1, estado.name()); // Importante: Paso el Enum como String
       rs = pst.executeQuery();
@@ -272,13 +280,14 @@ public class ReparacionDAO implements DAO<Reparacion, Integer>, AdminConexion {
   }
 
   public List<Reparacion> getHistorialPorEquipo(Integer idEquipo) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
     List<Reparacion> lista = new ArrayList<>();
 
     try {
       // Obtengo el historial completo filtrando por el ID del equipo.
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_GET_HISTORIAL_POR_EQUIPO);
       pst.setInt(1, idEquipo);
       rs = pst.executeQuery();
