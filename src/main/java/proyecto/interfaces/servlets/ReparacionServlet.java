@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @WebServlet("/ReparacionController")
 public class ReparacionServlet extends HttpServlet {
@@ -40,21 +41,17 @@ public class ReparacionServlet extends HttpServlet {
       if (action == null) action = "listar";
 
       switch (action) {
-        case "listar":
-          listarReparaciones(request, response);
-          break;
         case "nueva":
           mostrarFormularioNueva(request, response);
           break;
         case "editar":
-          mostrarFormularioEdicion(request, response);
-          break;
-        case "verDetalle": // Reutilizamos el formulario de edición en modo lectura o normal
+        case "verDetalle":
           mostrarFormularioEdicion(request, response);
           break;
         case "eliminar":
           eliminarReparacion(request, response);
           break;
+        case "listar":
         default:
           listarReparaciones(request, response);
       }
@@ -83,40 +80,28 @@ public class ReparacionServlet extends HttpServlet {
   // --- MÉTODOS DE VISUALIZACIÓN ---
 
   private void listarReparaciones(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-    // 1. Capturar el filtro del JSP
     String estadoStr = request.getParameter("filtroEstado");
     List<Reparacion> lista;
 
     try {
       if (estadoStr != null && !estadoStr.trim().isEmpty()) {
-        // Si hay filtro: Convertir String -> Enum y buscar
         EstadoReparacion estado = EstadoReparacion.valueOf(estadoStr);
         lista = reparacionDAO.getByEstado(estado);
-
-        // Guardamos el estado para que el <select> no se resetee
         request.setAttribute("estadoSeleccionado", estadoStr);
       } else {
-        // Si no hay filtro: Traer todo
         lista = reparacionDAO.getAll();
       }
     } catch (IllegalArgumentException e) {
-      // Si el estado no es válido (ej. alguien manipuló la URL), traemos todo por seguridad
       lista = reparacionDAO.getAll();
     }
 
-    // 2. Enviar la lista de resultados
     request.setAttribute("listaReparaciones", lista);
-
-    // 3. Enviar la lista de opciones para llenar el <select>
-    // Esto es necesario para que el dropdown tenga opciones (PENDIENTE, TERMINADO, etc.)
     request.setAttribute("listaEstados", Arrays.asList(EstadoReparacion.values()));
 
     request.getRequestDispatcher("/vistas/tecnico/listaReparaciones.jsp").forward(request, response);
   }
 
   private void mostrarFormularioNueva(HttpServletRequest request, HttpServletResponse response) throws Exception {
-    // Para crear una orden, NECESITAMOS el ID del equipo
     int idEquipo = Integer.parseInt(request.getParameter("idEquipo"));
     Equipo equipo = equipoDAO.getById(idEquipo);
 
@@ -124,10 +109,8 @@ public class ReparacionServlet extends HttpServlet {
 
     Reparacion reparacion = new Reparacion();
     reparacion.setEquipo(equipo);
-
-    // Valores por defecto
     reparacion.setEstado(EstadoReparacion.PENDIENTE);
-    reparacion.setDiagnosticoFinal(equipo.getProblemaReportado()); // Copiamos la falla inicial como diagnóstico base
+    reparacion.setDiagnosticoFinal(equipo.getProblemaReportado());
 
     prepararDatosFormulario(request, reparacion);
     request.setAttribute("titulo", "Nueva Orden de Reparación");
@@ -145,10 +128,8 @@ public class ReparacionServlet extends HttpServlet {
     request.getRequestDispatcher("/vistas/tecnico/formularioReparacion.jsp").forward(request, response);
   }
 
-  // Helper para enviar datos comunes al JSP
   private void prepararDatosFormulario(HttpServletRequest request, Reparacion reparacion) {
     request.setAttribute("reparacion", reparacion);
-    // Enviamos los valores del Enum para llenar el <select>
     request.setAttribute("listaEstados", Arrays.asList(EstadoReparacion.values()));
   }
 
@@ -158,8 +139,9 @@ public class ReparacionServlet extends HttpServlet {
     Usuario usuarioLogueado = (Usuario) request.getSession().getAttribute("usuarioLogueado");
     if (usuarioLogueado == null) throw new Exception("Sesión expirada.");
 
-    Reparacion r = mapearFormulario(request);
-    r.setUsuario(usuarioLogueado); // Asignar al técnico que crea la orden
+    Reparacion r = new Reparacion();
+    mapearDatosRequestAReparacion(request, r); // Modularización consistente
+    r.setUsuario(usuarioLogueado);
 
     reparacionDAO.insert(r);
 
@@ -171,9 +153,10 @@ public class ReparacionServlet extends HttpServlet {
     Usuario usuarioLogueado = (Usuario) request.getSession().getAttribute("usuarioLogueado");
     if (usuarioLogueado == null) throw new Exception("Sesión expirada.");
 
-    Reparacion r = mapearFormulario(request);
+    Reparacion r = new Reparacion();
     r.setIdReparacion(Integer.parseInt(request.getParameter("idReparacion")));
-    r.setUsuario(usuarioLogueado); // Actualizamos al técnico que modificó (opcional)
+    mapearDatosRequestAReparacion(request, r); // Modularización consistente
+    r.setUsuario(usuarioLogueado);
 
     reparacionDAO.update(r);
 
@@ -188,32 +171,31 @@ public class ReparacionServlet extends HttpServlet {
     response.sendRedirect(request.getContextPath() + "/ReparacionController?action=listar");
   }
 
-  // Helper para leer los datos del POST
-  private Reparacion mapearFormulario(HttpServletRequest request) {
-    Reparacion r = new Reparacion();
+  // --- MÉTODOS AUXILIARES ---
 
-    // ID Equipo
+  /**
+   * Extrae los datos del request y los setea en la reparación de forma declarativa.
+   */
+  private void mapearDatosRequestAReparacion(HttpServletRequest request, Reparacion r) {
     Equipo e = new Equipo();
     e.setIdEquipo(Integer.parseInt(request.getParameter("idEquipo")));
     r.setEquipo(e);
 
-    // Datos
     r.setDiagnosticoFinal(request.getParameter("diagnosticoFinal"));
     r.setEstado(EstadoReparacion.valueOf(request.getParameter("estado")));
 
-    // Costos (Manejo de nulos/vacíos)
     r.setCostoRepuestos(parseBigDecimal(request.getParameter("costoRepuestos")));
     r.setCostoManoObra(parseBigDecimal(request.getParameter("costoManoObra")));
-    r.calcularTotal(); // Método de la entidad que suma
+    r.calcularTotal();
 
-    // Fechas
-    String fechaDiag = request.getParameter("fechaDiagnostico");
-    if (fechaDiag != null && !fechaDiag.isEmpty()) r.setFechaDiagnostico(LocalDate.parse(fechaDiag));
+    // USO DE OPTIONAL: Enfoque funcional para manejar nulos sin condicionales (if) anidados.
+    Optional.ofNullable(request.getParameter("fechaDiagnostico"))
+        .filter(fecha -> !fecha.trim().isEmpty())
+        .ifPresent(fecha -> r.setFechaDiagnostico(LocalDate.parse(fecha)));
 
-    String fechaEnt = request.getParameter("fechaEntrega");
-    if (fechaEnt != null && !fechaEnt.isEmpty()) r.setFechaEntregaEstimada(LocalDate.parse(fechaEnt));
-
-    return r;
+    Optional.ofNullable(request.getParameter("fechaEntrega"))
+        .filter(fecha -> !fecha.trim().isEmpty())
+        .ifPresent(fecha -> r.setFechaEntregaEstimada(LocalDate.parse(fecha)));
   }
 
   private BigDecimal parseBigDecimal(String valor) {
@@ -235,4 +217,3 @@ public class ReparacionServlet extends HttpServlet {
     }
   }
 }
-

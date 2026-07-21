@@ -16,14 +16,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Stream;
 
-/**
- * Servlet para la gestión completa CRUD de clientes.
- * - Listar (GET)
- * - Crear (GET/POST)
- * - Editar (GET/POST)
- * - Eliminar (GET)
- */
 @WebServlet("/ClienteController")
 public class ClienteServlet extends HttpServlet {
   private ClienteDAO clienteDAO;
@@ -32,7 +26,6 @@ public class ClienteServlet extends HttpServlet {
 
   @Override
   public void init() throws ServletException {
-    // Inicialización de DAOs
     this.clienteDAO = new ClienteDAO();
     this.equipoDAO = new EquipoDAO();
     this.reparacionDAO = new ReparacionDAO();
@@ -44,21 +37,16 @@ public class ClienteServlet extends HttpServlet {
 
     try {
       switch (action == null ? "listar" : action) {
-        case "listar":
-          listarClientes(request, response);
-          break;
         case "crear":
-          // Muestra el formulario vacío para crear un nuevo cliente
           mostrarFormulario(request, response, 0);
           break;
         case "editar":
-          // Muestra el formulario precargado para editar
-          int idClienteEditar = Integer.parseInt(request.getParameter("idCliente"));
-          mostrarFormulario(request, response, idClienteEditar);
+          mostrarFormulario(request, response, Integer.parseInt(request.getParameter("idCliente")));
           break;
         case "eliminar":
           eliminarCliente(request, response);
           break;
+        case "listar":
         default:
           listarClientes(request, response);
           break;
@@ -76,23 +64,17 @@ public class ClienteServlet extends HttpServlet {
     if ("actualizar".equals(action)) {
       actualizarCliente(request, response);
     } else if ("guardar".equals(action)) {
-      guardarCliente(request, response); // Nuevo método para INSERT
+      guardarCliente(request, response);
     } else {
       response.sendRedirect(request.getContextPath() + "/ClienteController?action=listar");
     }
   }
 
-  /**
-   * Muestra el formulario para crear (idCliente = 0) o editar (idCliente > 0) un cliente.
-   * Se ajustó la ruta del dispatcher a /vistas/tecnico/
-   */
   private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response, int idCliente) throws Exception {
     Cliente cliente;
     if (idCliente == 0) {
-      // Modo Creación: Objeto cliente vacío
       cliente = new Cliente();
     } else {
-      // Modo Edición: Cargar datos del cliente
       cliente = clienteDAO.getById(idCliente);
       if (cliente == null) {
         throw new Exception("Cliente con ID " + idCliente + " no encontrado.");
@@ -103,102 +85,72 @@ public class ClienteServlet extends HttpServlet {
     request.getRequestDispatcher("/vistas/tecnico/formularioCliente.jsp").forward(request, response);
   }
 
-  // --- Lógica de CREATE (Nuevo) ---
   private void guardarCliente(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     try {
-      // 1. Obtener parámetros (no se necesita ID, es autoincremental)
-      String nombre = request.getParameter("nombre");
-      String apellido = request.getParameter("apellido");
-      String telefono = request.getParameter("telefono");
-      String email = request.getParameter("email");
-
-      // Obtener el Usuario logueado de la sesión y verificar
-      Usuario usuarioLogueado = (Usuario) request.getSession().getAttribute("usuarioLogueado");
-
-      if (usuarioLogueado == null) {
-        throw new Exception("Error al obtener ID de usuario para insertar cliente. No hay un usuario logueado en la sesión.");
+      // Validación declarativa con Streams
+      if (faltanDatosObligatorios(request)) {
+        throw new IllegalArgumentException("El nombre y el apellido son obligatorios.");
       }
 
-      // 3. Crear objeto Cliente
-      Cliente nuevoCliente = new Cliente();
-      nuevoCliente.setNombre(nombre);
-      nuevoCliente.setApellido(apellido);
-      nuevoCliente.setTelefono(telefono);
-      nuevoCliente.setEmail(email);
-      nuevoCliente.setUsuario(usuarioLogueado); // ASIGNACIÓN CLAVE
+      Usuario usuarioLogueado = (Usuario) request.getSession().getAttribute("usuarioLogueado");
+      if (usuarioLogueado == null) {
+        throw new Exception("Error: No hay un usuario logueado en la sesión.");
+      }
 
-      // 4. Insertar
+      Cliente nuevoCliente = new Cliente();
+      mapearDatosRequestACliente(request, nuevoCliente); // Modularización
+      nuevoCliente.setUsuario(usuarioLogueado);
+
       clienteDAO.insert(nuevoCliente);
 
-      request.getSession().setAttribute("success", "Cliente " + nombre + " registrado con éxito.");
+      request.getSession().setAttribute("success", "Cliente " + nuevoCliente.getNombre() + " registrado con éxito.");
       response.sendRedirect(request.getContextPath() + "/ClienteController?action=listar");
 
     } catch (Exception e) {
       request.setAttribute("error", "Error al registrar el cliente: " + e.getMessage());
 
-      // Recargar el formulario con los datos ingresados para evitar pérdida
       Cliente clienteError = new Cliente();
-      clienteError.setNombre(request.getParameter("nombre"));
-      clienteError.setApellido(request.getParameter("apellido"));
-      clienteError.setTelefono(request.getParameter("telefono"));
-      clienteError.setEmail(request.getParameter("email"));
+      mapearDatosRequestACliente(request, clienteError);
       request.setAttribute("cliente", clienteError);
-
       request.getRequestDispatcher("/vistas/tecnico/formularioCliente.jsp").forward(request, response);
     }
   }
 
-  // --- Lógica de UPDATE (Edición) ---
   private void actualizarCliente(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     try {
-      // 1. Obtener parámetros (incluyendo ID)
-      int idCliente = Integer.parseInt(request.getParameter("idCliente"));
-      String nombre = request.getParameter("nombre");
-      String apellido = request.getParameter("apellido");
-      String telefono = request.getParameter("telefono");
-      String email = request.getParameter("email");
+      if (faltanDatosObligatorios(request)) {
+        throw new IllegalArgumentException("El nombre y el apellido son obligatorios.");
+      }
 
-      //Cargar el cliente existente primero para mantener el objeto Usuario asociado
+      int idCliente = Integer.parseInt(request.getParameter("idCliente"));
       Cliente cliente = clienteDAO.getById(idCliente);
+
       if (cliente == null) {
         throw new Exception("Error al actualizar: Cliente con ID " + idCliente + " no encontrado.");
       }
 
-      // 3. Actualizar SOLO los campos que vienen del formulario (nombre, apellido, etc.)
-      cliente.setNombre(nombre);
-      cliente.setApellido(apellido);
-      cliente.setTelefono(telefono);
-      cliente.setEmail(email);
+      mapearDatosRequestACliente(request, cliente); // Modularización
 
-      // 4. Guardar cambios
       clienteDAO.update(cliente);
 
-      request.getSession().setAttribute("success", "Cliente " + nombre + " actualizado con éxito.");
+      request.getSession().setAttribute("success", "Cliente " + cliente.getNombre() + " actualizado con éxito.");
       response.sendRedirect(request.getContextPath() + "/ClienteController?action=listar");
 
     } catch (Exception e) {
       request.setAttribute("error", "Error al actualizar el cliente: " + e.getMessage());
 
-      // Recargamos el formulario en caso de error
       try {
-        // Si falla la actualización, volvemos al formulario con los datos que el usuario intentó enviar
         Cliente clienteError = new Cliente();
         clienteError.setIdCliente(Integer.parseInt(request.getParameter("idCliente")));
-        clienteError.setNombre(request.getParameter("nombre"));
-        clienteError.setApellido(request.getParameter("apellido"));
-        clienteError.setTelefono(request.getParameter("telefono"));
-        clienteError.setEmail(request.getParameter("email"));
+        mapearDatosRequestACliente(request, clienteError);
         request.setAttribute("cliente", clienteError);
-      } catch (NumberFormatException ex) { /* Ignorar si falla el ID */ }
+      } catch (NumberFormatException ex) {}
 
       request.getRequestDispatcher("/vistas/tecnico/formularioCliente.jsp").forward(request, response);
     }
   }
 
-
   private void listarClientes(HttpServletRequest request, HttpServletResponse response) throws Exception {
-
-    // 1. Verificar búsqueda
     String busqueda = request.getParameter("busquedaApellido");
     List<Cliente> listaClientes;
 
@@ -213,29 +165,42 @@ public class ClienteServlet extends HttpServlet {
     request.getRequestDispatcher("/vistas/tecnico/listaClientes.jsp").forward(request, response);
   }
 
-  // --- Lógica de DELETE (Eliminar) ---
   private void eliminarCliente(HttpServletRequest request, HttpServletResponse response) throws Exception {
     int idCliente = Integer.parseInt(request.getParameter("idCliente"));
-
-    // 1. Buscar equipos y reparaciones asociadas para eliminación en cascada
     List<Equipo> equipos = equipoDAO.getByClienteId(idCliente);
 
-    for (Equipo equipo : equipos) {
-      List<Reparacion> reparaciones = reparacionDAO.getByEquipoId(equipo.getIdEquipo());
+    // USO DE STREAMS: Eliminación en cascada usando forEach (Consumer)
+    equipos.forEach(equipo -> {
+      reparacionDAO.getByEquipoId(equipo.getIdEquipo())
+          .forEach(reparacion -> reparacionDAO.delete(reparacion.getIdReparacion()));
 
-      // 2. Eliminar todas las reparaciones de cada equipo
-      for (Reparacion reparacion : reparaciones) {
-        reparacionDAO.delete(reparacion.getIdReparacion());
-      }
-
-      // 3. Eliminar el equipo
       equipoDAO.delete(equipo.getIdEquipo());
-    }
+    });
 
-    // 4. Eliminar el cliente
     clienteDAO.delete(idCliente);
 
     request.getSession().setAttribute("success", "Cliente ID " + idCliente + " y todos sus datos asociados fueron eliminados correctamente.");
     response.sendRedirect(request.getContextPath() + "/ClienteController?action=listar");
+  }
+
+  // --- MÉTODOS AUXILIARES ---
+
+  /**
+   * Extrae los datos del request y los setea en el cliente. Mantiene el código DRY.
+   */
+  private void mapearDatosRequestACliente(HttpServletRequest request, Cliente cliente) {
+    cliente.setNombre(request.getParameter("nombre"));
+    cliente.setApellido(request.getParameter("apellido"));
+    cliente.setTelefono(request.getParameter("telefono"));
+    cliente.setEmail(request.getParameter("email"));
+  }
+
+  /**
+   * Valida usando Streams (anyMatch) si los campos clave están vacíos.
+   * anyMatch detiene la evaluación apenas encuentra un 'true' (cortocircuito).
+   */
+  private boolean faltanDatosObligatorios(HttpServletRequest request) {
+    return Stream.of(request.getParameter("nombre"), request.getParameter("apellido"))
+        .anyMatch(val -> val == null || val.trim().isEmpty());
   }
 }
