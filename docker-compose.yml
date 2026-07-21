@@ -1,0 +1,35 @@
+  version: '3.8'
+
+  services:
+    # Contenedor de la Base de Datos MySQL
+    mysql-db:
+      image: mysql:8.0
+      container_name: reparaciones_mysql
+      environment:
+        MYSQL_ROOT_PASSWORD: root
+        MYSQL_DATABASE: reparacion_pcs
+      ports:
+        - "3307:3306"
+      volumes:
+        - mysql_data:/var/lib/mysql
+        - ./reparacion_pcs.sql:/docker-entrypoint-initdb.d/init.sql
+        # Opcional: si tienes un script SQL inicial, descomenta la siguiente línea y pon tu script en esa carpeta
+        # - ./init-scripts:/docker-entrypoint-initdb.d
+
+    # Contenedor de Tomcat con tu Aplicación
+    tomcat-app:
+      build: .
+      container_name: reparaciones_tomcat
+      ports:
+        - "8080:8080"
+      depends_on:
+        - mysql-db
+      environment:
+        # Estas son las variables que leerá tu AdminConexion
+        # Nota que el host no es "localhost", sino el nombre del contenedor de BD: "mysql-db"
+        DB_URL: jdbc:mysql://mysql-db:3306/reparacion_pcs?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        DB_USER: root
+        DB_PASS: root
+
+  volumes:
+    mysql_data:

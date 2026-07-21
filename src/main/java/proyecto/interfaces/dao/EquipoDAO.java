@@ -10,9 +10,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
+public class EquipoDAO implements DAO<Equipo, Integer> {
 
-  // Defino mis consultas SQL aquí arriba para no tenerlas dispersas por el código.
   private static final String SQL_GETALL =
       "SELECT e.*, c.nombre AS nombre_cliente, c.apellido AS apellido_cliente, " +
           "c.telefono AS telefono_cliente, c.email AS email_cliente, c.id_usuario " +
@@ -41,22 +40,20 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public List<Equipo> getAll() {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
     List<Equipo> listaEquipos = new ArrayList<>();
 
     try {
-      // Ejecuto la consulta con JOIN para traer no solo el equipo, sino los datos de su dueño.
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_GETALL);
       rs = pst.executeQuery();
 
       while (rs.next()) {
-        // Reconstruyo el objeto Usuario (Técnico) solo con su ID.
         Usuario usuarioAsociado = new Usuario();
         usuarioAsociado.setIdUsuario(rs.getInt("id_usuario"));
 
-        // Reconstruyo el Cliente completo porque mi consulta trajo sus datos.
         Cliente cliente = new Cliente();
         cliente.setIdCliente(rs.getInt("id_cliente"));
         cliente.setNombre(rs.getString("nombre_cliente"));
@@ -65,7 +62,6 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
         cliente.setEmail(rs.getString("email_cliente"));
         cliente.setUsuario(usuarioAsociado);
 
-        // Finalmente armo el Equipo y le asocio el Cliente que acabo de crear.
         Equipo equipo = new Equipo();
         equipo.setIdEquipo(rs.getInt("id_equipo"));
         equipo.setCliente(cliente);
@@ -93,22 +89,18 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
     return listaEquipos;
   }
 
-  /**
-   * Obtiene todos los equipos asociados a un ID de Cliente.
-   */
   public List<Equipo> getByClienteId(Integer idCliente) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
     List<Equipo> listaEquipos = new ArrayList<>();
 
     try {
-      // Busco específicamente los equipos de un cliente para mostrarlos en su detalle.
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_GETBYCLIENTEID);
       pst.setInt(1, idCliente);
       rs = pst.executeQuery();
 
-      // Creo un cliente "vacío" solo con el ID para cumplir con la relación de objeto.
       Cliente clientePlaceholder = new Cliente();
       clientePlaceholder.setIdCliente(idCliente);
 
@@ -144,12 +136,12 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public void insert(Equipo equipo) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
 
     try {
-      // Pido las claves generadas para saber qué ID le asignó la base de datos al nuevo equipo.
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS);
 
       pst.setInt(1, equipo.getCliente().getIdCliente());
@@ -163,7 +155,6 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
       if (resultado == 1) {
         rs = pst.getGeneratedKeys();
         if (rs.next()) {
-          // Guardo el ID nuevo en mi objeto Java para poder usarlo inmediatamente si lo necesito.
           equipo.setIdEquipo(rs.getInt(1));
         }
         System.out.println("Equipo insertado con ID: " + equipo.getIdEquipo());
@@ -185,19 +176,18 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public void update(Equipo equipo) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
 
     try {
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_UPDATE);
 
-      // Cargo los datos modificados en la consulta de actualización.
       pst.setString(1, equipo.getTipoEquipo());
       pst.setString(2, equipo.getMarca());
       pst.setString(3, equipo.getModelo());
       pst.setString(4, equipo.getNumeroSerie());
       pst.setString(5, equipo.getProblemaReportado());
-      // El ID va al final porque está en la cláusula WHERE.
       pst.setInt(6, equipo.getIdEquipo());
 
       int resultado = pst.executeUpdate();
@@ -221,10 +211,11 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public void delete(Integer id) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
 
     try {
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_DELETE);
       pst.setInt(1, id);
 
@@ -250,13 +241,13 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public Equipo getById(Integer id) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
     Equipo equipo = null;
 
     try {
-      // Busco un equipo específico para editarlo.
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_GETBYID);
       pst.setInt(1, id);
       rs = pst.executeQuery();
@@ -270,7 +261,6 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
         equipo.setNumeroSerie(rs.getString("num_serie"));
         equipo.setProblemaReportado(rs.getString("problema_reportado"));
 
-        // Como esta consulta no tiene JOIN, solo recupero el ID del cliente.
         Cliente clientePlaceholder = new Cliente();
         clientePlaceholder.setIdCliente(rs.getInt("id_cliente"));
         equipo.setCliente(clientePlaceholder);
@@ -292,13 +282,13 @@ public class EquipoDAO implements DAO<Equipo, Integer>, AdminConexion {
 
   @Override
   public boolean existsById(Integer id) {
-    Connection conn = obtenerConexion();
+    Connection conn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
     boolean existe = false;
 
     try {
-      // Verificación rápida de existencia.
+      conn = AdminConexion.INSTANCE.obtenerConexion();
       pst = conn.prepareStatement(SQL_GETBYID);
       pst.setInt(1, id);
       rs = pst.executeQuery();
