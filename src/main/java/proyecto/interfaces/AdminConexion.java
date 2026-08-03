@@ -15,7 +15,7 @@ public enum AdminConexion {
   INSTANCE;
 
   private final Logger log = Logger.getLogger(AdminConexion.class.getName());
-  private final HikariDataSource dataSource;
+  private HikariDataSource dataSource;
 
   AdminConexion() {
     this.dataSource = inicializarPool();
@@ -25,10 +25,10 @@ public enum AdminConexion {
     try {
       log.info("[DB-LOG] Iniciando configuración del pool HikariCP para Reparaciones...");
 
-      // Variables de entorno inyectadas por Docker
-      String envUrl  = System.getenv("DB_URL");
-      String envUser = System.getenv("DB_USER");
-      String envPass = System.getenv("DB_PASS");
+      // Variables de entorno inyectadas por Docker o Propiedades del Sistema para Tests
+      String envUrl  = System.getenv("DB_URL") != null ? System.getenv("DB_URL") : System.getProperty("db.url");
+      String envUser = System.getenv("DB_USER") != null ? System.getenv("DB_USER") : System.getProperty("db.user");
+      String envPass = System.getenv("DB_PASS") != null ? System.getenv("DB_PASS") : System.getProperty("db.password");
 
       HikariConfig config = new HikariConfig();
       config.setPoolName("ReparacionesPool");
@@ -90,5 +90,9 @@ public enum AdminConexion {
       dataSource.close();
       log.info("[DB-LOG] Pool cerrado correctamente.");
     }
+  }
+  public void recargarPoolParaTests() {
+    cerrarPool();
+    this.dataSource = inicializarPool();
   }
 }
